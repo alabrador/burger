@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Look claro de cadena de hamburguesas: blanco, rojo principal, amarillo de acento. */
+@theme {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f7f4f0;
+  --color-ink: #25201d;
+  --color-muted: #6e6661;
+  --color-line: #ece5dd;
+  --color-accent: #d7261b;
+  --color-accent-ink: #b71d13;
+  --color-accent-soft: #fdeceb;
+  --color-gold: #ffbc0d;
+  --color-gold-soft: #fff4d1;
+  --color-ok: #2e7d32;
+  --color-stage-a: #fffaf0;
+  --color-stage-b: #ffe6ae;
+  --font-display: var(--font-archivo), "Arial Black", system-ui, sans-serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.brand-mark {
+  color: var(--color-accent);
+  background: linear-gradient(transparent 72%, var(--color-gold) 72%, var(--color-gold) 92%, transparent 92%);
+  padding: 0 0.06em;
+}
+
+.stage-bg {
+  background: radial-gradient(120% 90% at 50% 30%, var(--color-stage-a), var(--color-stage-b));
+}
+
+.stripe {
+  background: linear-gradient(90deg, var(--color-accent) 0 70%, var(--color-gold) 70% 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
