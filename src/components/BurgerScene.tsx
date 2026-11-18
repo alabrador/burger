@@ -7,7 +7,6 @@ import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
 import { DRACO, HEIGHT_OVERRIDE, MODELS, PROCEDURAL_HEIGHT, TRAY } from "@/lib/models";
 import { useBurger } from "@/lib/store";
-import { Procedural } from "./Procedural";
 
 const MODEL_KEYS = Object.keys(MODELS);
 const MODEL_URLS = MODEL_KEYS.map((k) => MODELS[k]);
@@ -144,37 +143,13 @@ function Burger() {
       <group position-y={TRAY_TOP}>
         {layers.map((l) => (
           <Layer key={l.key} layerKey={l.key} index={l.i} target={l.y}>
-            {assets[l.base] ? (
-              <primitive object={assets[l.base].scene.clone(true)} />
-            ) : l.base === "swiss" ? (
-              <Swiss cheddar={assets.cheddar.scene} />
-            ) : (
-              <Procedural kind={l.base} seed={seeded(l.key)} />
-            )}
+            {assets[l.base] && <primitive object={assets[l.base].scene.clone(true)} />}
           </Layer>
         ))}
       </group>
       <Tray />
     </group>
   );
-}
-
-/** Queso suizo: misma lámina fundida que el cheddar, en tono marfil. */
-function Swiss({ cheddar }: { cheddar: THREE.Object3D }) {
-  const obj = useMemo(() => {
-    const c = cheddar.clone(true);
-    c.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (!m.isMesh) return;
-      const mat = (m.material as THREE.MeshStandardMaterial).clone();
-      mat.map = null;
-      mat.color = new THREE.Color("#f1dfa6").convertSRGBToLinear();
-      mat.roughness = 0.45;
-      m.material = mat;
-    });
-    return c;
-  }, [cheddar]);
-  return <primitive object={obj} />;
 }
 
 function Tray() {

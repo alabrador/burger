@@ -17,6 +17,11 @@ export const MODELS: Record<string, string> = {
   mustard: "/models/sauce_mustard.glb",
   bbq: "/models/sauce_bbq.glb",
   house: "/models/sauce_house.glb",
+  swiss: "/models/cheese_swiss.glb",
+  onion: "/models/onion_red_rings.glb",
+  caramel: "/models/onion_caramelized.glb",
+  pickles: "/models/pickle_slices.glb",
+  jalapeno: "/models/jalapeno_rings.glb",
 };
 
 export const TRAY = "/models/bandeja_madera.glb";
@@ -25,11 +30,5 @@ export const DRACO = "/draco/";
 /** Alturas que se ajustan a mano (metros): el huevo deja ver la yema bajo el pan. */
 export const HEIGHT_OVERRIDE: Record<string, number> = { egg: 0.013 };
 
-/** Alturas de los ingredientes que aún no tienen modelo de Blender (metros). */
-export const PROCEDURAL_HEIGHT: Record<string, number> = {
-  swiss: 0.0025,
-  onion: 0.003,
-  caramel: 0.004,
-  pickles: 0.0025,
-  jalapeno: 0.003,
-};
+/** Altura por defecto si algún ingrediente futuro aún no tiene modelo (metros). */
+export const PROCEDURAL_HEIGHT: Record<string, number> = {};

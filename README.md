@@ -19,8 +19,6 @@ Abre http://localhost:3000.
 - `src/lib/store.ts`: estado del pedido (Zustand).
 - `src/lib/models.ts`: qué GLB usa cada ingrediente.
 - `src/components/BurgerScene.tsx`: escena 3D, luces, bandeja y animación de las capas.
-- `src/components/Procedural.tsx`: ingredientes que aún no tienen modelo de Blender
-  (cebolla, cebolla caramelizada, pepinillos, jalapeños).
 - `src/components/Configurator.tsx`: cabecera, visor y panel del pedido.
 - `public/models/*.glb`: modelos exportados desde Blender con compresión Draco.
 - `public/draco/`: decodificador Draco servido desde la propia app.
