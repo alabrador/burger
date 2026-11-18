@@ -2,7 +2,7 @@
 
 Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los vegetales, las salsas, los extras y la bebida del combo, y la hamburguesa se arma en vivo, capa a capa, con modelos realistas hechos en Blender.
 
-**Web:** https://creatuburger.es
+**Web:** https://creatuburger.com
 
 ![Crea tu Burger en PC](docs/images/app-pc.jpg)
 
