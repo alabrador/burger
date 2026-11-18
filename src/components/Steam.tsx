@@ -28,28 +28,41 @@ float noise(vec2 p) {
 }
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
-  for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 17.0; a *= 0.5; }
+  for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.07 + 13.1; a *= 0.5; }
   return v;
 }
 
 void main() {
   vec2 uv = vUv;
-  float t = uTime * 0.22 + uSeed * 10.0;
-  // El humo sube y se ondula más cuanto más alto está.
-  vec2 q = vec2(uv.x * 2.2, uv.y * 1.6 - t);
-  float warp = fbm(q + vec2(0.0, uSeed)) - 0.5;
-  float x = uv.x + warp * (0.22 + uv.y * 0.7) + sin(uv.y * 5.0 - t * 2.0 + uSeed * 6.0) * 0.05 * uv.y;
-  // Hilos finos y difusos.
-  float strands = 0.0;
-  strands += exp(-pow((x - 0.42) * 24.0, 2.0));
-  strands += 0.7 * exp(-pow((x - 0.58) * 28.0, 2.0));
-  strands += 0.35 * exp(-pow((x - 0.5) * 12.0, 2.0));
-  float body = fbm(vec2(x * 4.0, uv.y * 3.0 - t * 1.4) + uSeed);
-  float d = strands * smoothstep(0.3, 0.7, body);
-  // Nace en la base, se desvanece arriba y por los lados.
-  d *= smoothstep(0.0, 0.18, uv.y) * (1.0 - smoothstep(0.45, 1.0, uv.y));
-  d *= smoothstep(0.0, 0.25, uv.x) * (1.0 - smoothstep(0.75, 1.0, uv.x));
-  gl_FragColor = vec4(vec3(0.93, 0.92, 0.9), clamp(d, 0.0, 1.0) * uOpacity);
+  float y = uv.y;
+  float t = uTime * 0.16 + uSeed * 7.0;
+  float d = 0.0;
+  // Varios hilos de vapor, cada uno con su base, su ondulación y su ciclo de vida.
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    float s = fract(sin((fi + 1.0) * 91.7 + uSeed * 37.0) * 4375.85);
+    float base = 0.26 + 0.48 * s;
+    // Ondula cada vez más al subir y se curva con el tiempo.
+    float sway = (fbm(vec2(y * 2.4 - t * 1.6, fi * 3.1 + uSeed)) - 0.5) * (0.1 + y * 0.8);
+    float curl = sin(y * (6.0 + s * 4.0) - t * 3.0 + fi * 2.0) * 0.035 * y;
+    float c = base + sway + curl;
+    float w = 0.014 + 0.06 * y + 0.05 * y * y;
+    float core = exp(-pow((uv.x - c) / w, 2.0)) + 0.35 * exp(-pow((uv.x - c) / (w * 2.6), 2.0));
+    // Se rompe en jirones que suben.
+    float tear = smoothstep(0.28, 0.75, fbm(vec2(uv.x * 6.0 + fi * 5.0, y * 3.2 - t * 4.0)));
+    // Cada hilo aparece y se apaga a su ritmo para que nunca se vea igual.
+    float life = 0.5 + 0.5 * sin(uTime * (0.35 + s * 0.3) + fi * 1.7 + uSeed * 9.0);
+    life = smoothstep(0.05, 0.6, life);
+    d += core * mix(0.15, 1.0, tear) * life * (0.55 + 0.45 * s);
+  }
+  // Nace pegado al pan, más denso abajo, se disuelve arriba y por los lados.
+  float fade = smoothstep(0.0, 0.12, y) * pow(1.0 - smoothstep(0.25, 1.0, y), 1.4);
+  fade *= smoothstep(0.0, 0.18, uv.x) * (1.0 - smoothstep(0.82, 1.0, uv.x));
+  d *= fade;
+  d = 1.0 - exp(-d * 1.2);
+  // Blanco cálido, un poco más claro donde es denso.
+  vec3 col = mix(vec3(0.82, 0.78, 0.74), vec3(1.0, 0.98, 0.95), d);
+  gl_FragColor = vec4(col, d * uOpacity);
 }`;
 
 function Plume({ seed, x, scale, opacity }: { seed: number; x: number; scale: number; opacity: number }) {
@@ -65,8 +78,8 @@ function Plume({ seed, x, scale, opacity }: { seed: number; x: number; scale: nu
     [seed, opacity],
   );
   useFrame((_, dt) => (mat.uniforms.uTime.value += dt));
-  const w = 0.14 * scale;
-  const h = 0.12 * scale;
+  const w = 0.15 * scale;
+  const h = 0.13 * scale;
   return (
     <mesh position={[x, h / 2, 0]} material={mat} renderOrder={10}>
       <planeGeometry args={[w, h]} />
@@ -83,9 +96,7 @@ export default function Steam({ y }: { y: number }) {
   return (
     <group ref={ref} position-y={y}>
       <Billboard lockY>
-        <Plume seed={0.13} x={-0.02} scale={1} opacity={0.55} />
-        <Plume seed={0.71} x={0.026} scale={0.85} opacity={0.4} />
-        <Plume seed={0.42} x={0.0} scale={1.15} opacity={0.3} />
+        <Plume seed={0.13} x={0} scale={1} opacity={0.55} />
       </Billboard>
     </group>
   );
