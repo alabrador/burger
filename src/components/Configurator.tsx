@@ -282,7 +282,7 @@ function OrderBar() {
   return (
     <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2 lg:inset-x-5 lg:bottom-5">
       <div
-        className="pointer-events-auto flex h-9 shrink-0 items-center rounded-lg border border-white/25 bg-black/40 px-0.5 backdrop-blur-sm"
+        className="pointer-events-auto flex h-8 shrink-0 items-center rounded-full bg-black/40 px-0.5 backdrop-blur-sm lg:h-9 lg:rounded-lg lg:border lg:border-white/25"
         role="group"
         aria-label="Cantidad de hamburguesas"
       >
@@ -315,9 +315,9 @@ function OrderBar() {
         type="button"
         onClick={add}
         aria-label={`Hacer pedido, ${money(total)}`}
-        className="cta-gold pointer-events-auto flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 font-display text-[13px] font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="cta-gold pointer-events-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full px-4 font-sans text-xs font-semibold lg:h-9 lg:rounded-lg lg:px-3 lg:font-display lg:text-[13px] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        <ShoppingBag className="size-4" strokeWidth={2.4} />
+        <ShoppingBag className="size-4 max-lg:hidden" strokeWidth={2.4} />
         Hacer pedido
       </button>
       <div className="ml-auto min-w-0 text-right">
