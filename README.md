@@ -19,8 +19,9 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
   - Vegetales: lechuga, tomate, cebolla morada, cebolla caramelizada, pepinillos y jalapeños.
   - Salsas: de la casa, kétchup, mostaza y BBQ, dibujadas como botes.
   - Extras: tocino ahumado y huevo frito.
-- **Combo:** siempre incluye pan brioche y papas fritas. La bebida es opcional: Coca-Cola o Sprite, normal o zero (+$2.50), con latas genéricas sin logos.
-- **Pedido:** se elige la cantidad (1 a 10 hamburguesas iguales), se ve el precio total y se pulsa "Hacer pedido". En PC es un botón amarillo con brillo animado, y en móvil un botón redondo solo con icono.
+- **Combo:** siempre incluye pan brioche y papas fritas. La bebida es opcional: Coca-Cola o Sprite, normal o zero (+2,50 €), con latas genéricas sin logos.
+- **Carrito:** se elige la cantidad (1 a 10 hamburguesas iguales) y se pulsa "Agregar al carrito". Se pueden añadir hamburguesas distintas. Desde el icono del carrito se cambian cantidades, se quitan hamburguesas y se pulsa "Pagar". El carrito se guarda en el navegador y admite hasta 10 hamburguesas por pedido.
+- **Carta en vivo:** precios, nombres, agotados e ingredientes nuevos salen del admin (`/api/catalog`). Si la API no responde, se usa la carta base.
 - **Diseño oscuro** con letrero de neón, logo propio "Crea tu Burger" y cabecera con navegación tipo píldora.
 - **Se adapta a cualquier pantalla y no tiene scroll de página.** La app ocupa exactamente la ventana:
   - Móvil: escena arriba, ingredientes abajo y menú inferior.
@@ -31,16 +32,24 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 
 ## Pedidos y panel del restaurante (`/admin`)
 
-- **Checkout** desde "Hacer pedido": nombre, correo, teléfono, hora de recogida (lo antes posible o por franjas), cupón y método de pago. Precios en euros con IVA del 10 % incluido.
+![Panel del restaurante](docs/images/admin-dashboard.png)
+
+| Productos | Detalle de un pedido |
+| --- | --- |
+| ![Productos](docs/images/admin-productos.png) | ![Detalle de un pedido](docs/images/admin-pedido.png) |
+
+- **Checkout** desde el botón "Pagar" del carrito: nombre, correo, teléfono, hora de recogida (lo antes posible o por franjas), cupón y método de pago. Precios en euros con IVA del 10 % incluido.
 - **Pagos:** tarjeta con Stripe Checkout, Bizum a través del TPV Redsys, PayPal y pago en el local. Cada pasarela confirma el pago con su webhook firmado.
 - **Seguimiento del pedido** en `/pedido` con el estado en vivo y el **QR de recogida**. El cliente recibe correos cuando el pedido se confirma, entra en preparación, está listo, se entrega, se cancela o se reembolsa.
-- **Panel `/admin`:**
-  - Resumen de ventas.
+- **Panel `/admin`** en tema claro con los colores de la marca (carbón, amarillo y rojo) y menú por secciones:
+  - Dashboard: ingresos, pedidos, ticket medio, gráfico por hora o día, cocina en vivo y pedidos recientes.
   - Pedidos con filtros y exportación CSV.
   - Pantalla de cocina que se actualiza sola.
   - Escáner de QR con la cámara.
   - Ticket de 80 mm para imprimir.
-  - Productos: precios, agotados y alérgenos.
+  - Productos: buscador, filtros y orden. Se editan precios, agotados, alérgenos, visibilidad y foto.
+  - Ingredientes nuevos: se crean dentro de una categoría, con foto, color de muestra y, si se quiere, una capa 3D que reutiliza un modelo existente.
+  - Categorías: crear, renombrar, ordenar, ocultar y borrar. Base, Carne y Bebidas son fijas.
   - Clientes, con anonimización RGPD.
   - Pagos y reembolsos.
   - Cupones.
@@ -66,7 +75,7 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 
 1. Crea una base de datos Postgres en [Neon](https://neon.tech) o [Supabase](https://supabase.com) y un Redis (por ejemplo [Upstash](https://upstash.com)).
 2. Copia `.env.example` a `.env.local` y rellénalo. En Vercel, pon las mismas variables en Settings → Environment Variables.
-3. Añade también en Vercel `ADMIN_EMAIL` y `ADMIN_PASSWORD` (mínimo 10 caracteres, con letras y números). En cada despliegue, `npm run build` aplica las migraciones, carga el catálogo sin pisar lo editado en el admin y crea ese usuario dueño si aún no existe (si ya existe, le pone la contraseña de `ADMIN_PASSWORD`). Cuando ya puedas entrar, borra `ADMIN_PASSWORD` para que un despliegue no deshaga un cambio de contraseña hecho en el admin.
+3. Añade también en Vercel `ADMIN_EMAIL` y `ADMIN_PASSWORD` (mínimo 10 caracteres, con letras y números). En cada despliegue, `npm run build` aplica las migraciones, carga el catálogo y las categorías sin pisar precios, categorías ni orden editados en el admin y crea ese usuario dueño si aún no existe (si ya existe, le pone la contraseña de `ADMIN_PASSWORD`). Cuando ya puedas entrar, borra `ADMIN_PASSWORD` para que un despliegue no deshaga un cambio de contraseña hecho en el admin.
    En local: `npm run db:migrate` y `npm run db:seed`.
 4. Entra en `/admin`, activa la verificación en dos pasos en "Mi cuenta" y configura el local, el SMTP y las pasarelas en "Configuración".
 5. Registra las URL de webhook que muestra cada pasarela en Configuración → Pagos.
@@ -139,13 +148,15 @@ src/
   server/             Backend: BD, Redis, auth, pedidos, pagos, correo, configuración
   proxy.ts            Protege /admin
   components/
+    Cart.tsx          Carrito: cantidades, total y botón Pagar
     Checkout.tsx      Formulario de pedido y pago
     Configurator.tsx  Cabecera, escena, barra de pedido, panel de ingredientes y menú móvil
     BurgerScene.tsx   Escena 3D: luces, bandeja, apilado, animaciones y cámara
     Brand.tsx         Logo, letrero de neón e ilustraciones (papas, latas, botes, iconos)
   lib/
     catalog.ts        Proteínas, ingredientes, precios, bebidas y orden de apilado
-    store.ts          Estado del pedido (Zustand)
+    live.ts           Carta en vivo desde el admin (precios, agotados, ingredientes nuevos)
+    store.ts          Estado del pedido y carrito (Zustand)
     models.ts         Qué GLB usa cada ingrediente
 public/
   models/             GLB con Draco
@@ -159,10 +170,15 @@ scripts/              Migrar, cargar datos, pruebas de API y de carga
 
 ## Añadir un ingrediente
 
+**Desde el admin (sin código):** en Productos → "Nuevo ingrediente", elige la categoría, el precio, la foto y, si quieres que se vea en 3D, la capa que reutiliza ("Loncha de queso suizo", "Salsa roja", etc.). Sale en la web en unos segundos.
+
+**Con un modelo 3D propio:**
+
 1. Modélalo en Blender con la base en `y = 0` y añade la propiedad `stack_height`.
 2. Expórtalo con Draco a `public/models/` y añade su ruta en `src/lib/models.ts`.
 3. Añádelo a su categoría en `src/lib/catalog.ts`, con el mismo id, su precio, gramos y calorías.
 4. Crea su miniatura en `public/thumbs/<id>.webp`.
+5. Despliega: el ingrediente se crea en la base de datos y desde entonces se gestiona en el admin.
 
 ## Historial del proyecto
 
@@ -175,3 +191,5 @@ scripts/              Migrar, cargar datos, pruebas de API y de carga
 7. Pantalla completa sin scroll, panel de ingredientes en cuadrícula, combo con papas y bebida, y botón "Hacer pedido".
 8. Adaptación automática a monitores grandes, cabecera profesional y scroll mejorado.
 9. Backend con Postgres y Redis: pedidos, pagos en euros (Stripe, Bizum, PayPal y efectivo), QR de recogida, correos de seguimiento y panel `/admin`.
+10. Admin en tema claro, gestión de categorías e ingredientes desde el panel, y carta en vivo en la web.
+11. Carrito: "Agregar al carrito" y pago desde el carrito.
