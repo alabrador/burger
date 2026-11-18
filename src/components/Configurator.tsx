@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useProgress } from "@react-three/drei";
 import {
   Beef,
+  ChevronRight,
+  ShoppingBag,
   Check,
   CirclePlus,
   CupSoda,
@@ -253,7 +255,11 @@ function Stage() {
         >
           <RotateCw className="size-4" />
         </Ctl>
-        <Ctl onClick={fullscreen} label="Pantalla completa">
+        <Ctl
+          className="max-lg:hidden"
+          onClick={fullscreen}
+          label="Pantalla completa"
+        >
           <Maximize className="size-4" />
         </Ctl>
       </div>
@@ -275,46 +281,7 @@ function OrderBar() {
   const btn =
     "grid size-9 place-items-center rounded-lg text-xl leading-none hover:bg-white/10 disabled:opacity-30 lg:size-10";
   return (
-    <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2 lg:inset-x-6 lg:bottom-6 lg:gap-3">
-      <div
-        className="pointer-events-auto flex h-11 shrink-0 items-center rounded-xl border border-white/25 bg-black/40 px-0.5 backdrop-blur-sm lg:h-12"
-        role="group"
-        aria-label="Cantidad de hamburguesas"
-      >
-        <button
-          type="button"
-          className={btn}
-          aria-label="Una hamburguesa menos"
-          disabled={count <= 1}
-          onClick={() => setCount(count - 1)}
-        >
-          −
-        </button>
-        <output
-          className="w-6 text-center font-display text-lg font-bold tabular-nums lg:w-8"
-          aria-live="polite"
-        >
-          {count}
-        </output>
-        <button
-          type="button"
-          className={btn}
-          aria-label="Una hamburguesa más"
-          disabled={count >= 10}
-          onClick={() => setCount(count + 1)}
-        >
-          +
-        </button>
-      </div>
-      <button
-        type="button"
-        onClick={add}
-        aria-label={`Añadir al carrito, ${money(total)}`}
-        className="cta-gold pointer-events-auto flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-3.5 font-display text-base font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-12 lg:px-6 lg:text-lg"
-      >
-        <ShoppingCart className="size-5 lg:size-6" strokeWidth={2.4} />
-        <span className="max-sm:hidden">Añadir al carrito</span>
-      </button>
+    <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col gap-2 lg:inset-x-6 lg:bottom-6 lg:flex-row-reverse lg:items-end lg:gap-3">
       <div className="ml-auto min-w-0 text-right">
         <p className="truncate text-[11px] text-ink/80 lg:text-sm">
           {count > 1
@@ -329,6 +296,53 @@ function OrderBar() {
         >
           {money(total)}
         </p>
+      </div>
+      <div className="flex items-center gap-2 lg:gap-3">
+        <div
+          className="pointer-events-auto flex h-12 shrink-0 items-center rounded-xl border border-white/25 bg-black/40 px-0.5 backdrop-blur-sm lg:h-14"
+          role="group"
+          aria-label="Cantidad de hamburguesas"
+        >
+          <button
+            type="button"
+            className={btn}
+            aria-label="Una hamburguesa menos"
+            disabled={count <= 1}
+            onClick={() => setCount(count - 1)}
+          >
+            −
+          </button>
+          <output
+            className="w-6 text-center font-display text-lg font-bold tabular-nums lg:w-8"
+            aria-live="polite"
+          >
+            {count}
+          </output>
+          <button
+            type="button"
+            className={btn}
+            aria-label="Una hamburguesa más"
+            disabled={count >= 10}
+            onClick={() => setCount(count + 1)}
+          >
+            +
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={add}
+          aria-label={`Hacer pedido, ${money(total)}`}
+          className="cta-gold group pointer-events-auto flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-2xl pl-1.5 pr-3 font-display min-[401px]:pr-2 text-sm font-black uppercase tracking-wide text-[#1b1208] min-[401px]:text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-14 lg:w-[260px] lg:flex-none lg:pl-2 lg:text-lg"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#1b1208] text-gold shadow-inner lg:size-10">
+            <ShoppingBag className="size-5" strokeWidth={2.4} />
+          </span>
+          <span className="flex-1 truncate text-center">Hacer pedido</span>
+          <ChevronRight
+            className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1 max-[400px]:hidden"
+            strokeWidth={3}
+          />
+        </button>
       </div>
     </div>
   );
@@ -363,11 +377,13 @@ function Ctl({
   onClick,
   label,
   children,
+  className = "",
 }: {
   pressed?: boolean;
   onClick: () => void;
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
@@ -376,7 +392,7 @@ function Ctl({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="grid size-9 place-items-center rounded-full border border-white/20 bg-black/45 backdrop-blur-sm hover:border-gold aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:text-[#1b1208]"
+      className={`${className} grid size-9 place-items-center rounded-full border border-white/20 bg-black/45 backdrop-blur-sm hover:border-gold aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:text-[#1b1208]`}
     >
       {children}
     </button>
