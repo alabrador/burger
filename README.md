@@ -56,6 +56,8 @@ Modelos incluidos en `public/models/`:
 
 Cada GLB tiene la base en `y = 0` y la propiedad personalizada `stack_height` (en metros), que la app usa para saber cuánto sube la pila. Las miniaturas del panel (`public/thumbs/*.webp`) se renderizaron desde esos mismos modelos.
 
+**Fuentes de Blender:** el `.blend` original, las texturas horneadas y los scripts de modelado y horneado están en [`blender/`](blender/README.md). El clon completo pesa unos 250 MB.
+
 ## Tecnología
 
 - [Next.js 16](https://nextjs.org) (App Router, Turbopack) y React 19
@@ -95,6 +97,7 @@ public/
   thumbs/             Miniaturas de los ingredientes
   draco/              Decodificador Draco servido por la propia app
 docs/images/          Capturas y renders de este README
+blender/              Fuentes de Blender: .blend, texturas y scripts
 ```
 
 ## Añadir un ingrediente
