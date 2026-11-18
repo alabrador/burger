@@ -13,6 +13,9 @@
   --color-red: #e3261b;
   --color-red-2: #b5150d;
   --color-ok: #3fbf4f;
+  --color-gold-ink: #9a5a00;
+  --color-char: #1c1917;
+  --color-char-2: #292420;
   --font-display: var(--font-archivo), "Arial Black", system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-script: var(--font-kaushan), "Brush Script MT", cursive;
@@ -171,4 +174,43 @@ body {
   12% { transform: translateY(0); opacity: 1; }
   80% { transform: translateY(0); opacity: 1; }
   100% { transform: translateY(0); opacity: 0; }
+}
+
+/* ---------- Panel de administración: tema claro con la misma gama (carbón, amarillo, rojo) ---------- */
+.admin-ui {
+  color-scheme: light;
+  --color-bg: #f6f3ee;
+  --color-panel: #ffffff;
+  --color-panel-2: #faf7f2;
+  --color-line: #e9e2d7;
+  --color-ink: #1f1b17;
+  --color-muted: #72695f;
+  --color-gold: #ffc21a;
+  --color-gold-2: #f2ab00;
+  --color-red: #d9261c;
+  --color-red-2: #b5150d;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+.admin-ui ::selection {
+  background: rgb(255 194 26 / 0.45);
+}
+/* franja de marca bajo las cabeceras: amarillo · carbón · rojo */
+.brand-stripe {
+  background: linear-gradient(90deg, #ffc21a 0 33.33%, #1c1917 33.33% 66.66%, #e3261b 66.66% 100%);
+}
+.admin-hero {
+  background:
+    radial-gradient(70% 120% at 85% 0%, rgb(255 194 26 / 0.16), transparent 60%),
+    radial-gradient(50% 90% at 0% 100%, rgb(227 38 27 / 0.14), transparent 60%),
+    linear-gradient(135deg, #1c1917 0%, #2a211b 100%);
+}
+.admin-shadow {
+  box-shadow:
+    0 1px 2px rgb(28 25 23 / 0.04),
+    0 10px 30px -18px rgb(28 25 23 / 0.25);
+}
+.admin-ui .pro-scroll,
+.admin-ui {
+  scrollbar-color: #d8cfc2 transparent;
 }

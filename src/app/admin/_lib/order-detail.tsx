@@ -121,7 +121,7 @@ export function OrderDetail({ id, onChange }: { id: string; onChange?: () => voi
           <Field label="Motivo de la cancelación (se guarda en el historial)">
             <input className={inputCls} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} maxLength={300} autoFocus />
           </Field>
-          {o.paymentStatus === "paid" && <p className="mt-2 text-xs text-red-200">Está pagado: después haz el reembolso abajo.</p>}
+          {o.paymentStatus === "paid" && <p className="mt-2 text-xs text-red-800">Está pagado: después haz el reembolso abajo.</p>}
           <div className="mt-2 flex gap-2">
             <Btn variant="danger" size="sm" disabled={busy} onClick={() => act({ status: "cancelled", reason: cancelReason || undefined }, "Pedido cancelado").then(() => setCancelReason(null))}>
               Confirmar cancelación
@@ -136,11 +136,11 @@ export function OrderDetail({ id, onChange }: { id: string; onChange?: () => voi
       <div className="grid gap-3 sm:grid-cols-2">
         <Info label="Cliente">
           <div className="font-medium">{o.customerName}</div>
-          <a className="text-muted hover:text-gold" href={`mailto:${o.customerEmail}`}>
+          <a className="text-muted hover:text-gold-ink" href={`mailto:${o.customerEmail}`}>
             {o.customerEmail}
           </a>
           {o.customerPhone && (
-            <a className="block text-muted hover:text-gold" href={`tel:${o.customerPhone}`}>
+            <a className="block text-muted hover:text-gold-ink" href={`tel:${o.customerPhone}`}>
               {o.customerPhone}
             </a>
           )}
@@ -157,7 +157,7 @@ export function OrderDetail({ id, onChange }: { id: string; onChange?: () => voi
         <ul className="divide-y divide-line/60 rounded-lg border border-line">
           {items.map((i) => (
             <li key={i.id} className="flex gap-3 p-3">
-              <span className="font-display text-lg font-bold text-gold">{i.quantity}×</span>
+              <span className="font-display text-lg font-bold text-gold-ink">{i.quantity}×</span>
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold">{i.title}</span>
                 <span className="block text-xs text-muted">{i.description}</span>
@@ -189,7 +189,7 @@ export function OrderDetail({ id, onChange }: { id: string; onChange?: () => voi
                 </span>
                 <span className="tabular-nums">
                   {eur(p.amountCents)}
-                  {p.refundedCents > 0 && <span className="text-violet-300"> (−{eur(p.refundedCents)})</span>}
+                  {p.refundedCents > 0 && <span className="text-violet-700"> (−{eur(p.refundedCents)})</span>}
                 </span>
               </li>
             ))}

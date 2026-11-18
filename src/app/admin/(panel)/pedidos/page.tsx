@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { api, dt, eur, hm, METHOD, STATUS } from "../../_lib/api";
 import { OrderDetail } from "../../_lib/order-detail";
 import { useMe } from "../../_lib/shell";
-import { Btn, Card, Drawer, Empty, inputCls, PageHead, Pager, PayBadge, StatusBadge, Table, useData } from "../../_lib/ui";
+import { Btn, Card, cx, Drawer, Empty, inputCls, PageHead, Pager, PayBadge, StatusBadge, Table, useData } from "../../_lib/ui";
 
 type Row = { id: string; code: string; status: string; paymentStatus: string; paymentMethod: string; customerName: string; customerEmail: string; totalCents: number; pickupAt: string; createdAt: string; items: number };
 
@@ -39,28 +39,26 @@ export default function Pedidos() {
               <RefreshCw className={loading ? "size-4 animate-spin" : "size-4"} />
             </Btn>
             {me.perms.includes("payments.view") && (
-              <a href={`/api/admin/orders/export?${qs}`} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-panel-2 px-3.5 text-sm font-semibold hover:border-gold/50">
+              <a href={`/api/admin/orders/export?${qs}`} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-panel px-4 text-sm font-semibold hover:bg-panel-2">
                 <Download className="size-4" /> CSV
               </a>
             )}
           </>
         }
       />
+      <div className="admin-shadow mb-5 flex flex-wrap gap-2 rounded-2xl bg-char p-2.5" role="tablist" aria-label="Estado">
+        {[["", "Todos"], ["active", "En curso"], ...Object.entries(STATUS).map(([k, v]) => [k, v.label])].map(([k, l]) => (
+          <button key={k} role="tab" aria-selected={f.status === k} onClick={() => set("status", k)} className={cx("rounded-xl border px-3.5 py-2 text-sm font-semibold transition", f.status === k ? "border-white bg-white text-char" : "border-white/20 text-white/85 hover:border-white/50 hover:text-white")}>
+            {l}
+          </button>
+        ))}
+      </div>
       <Card>
-        <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
+        <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
           <label className="relative">
             <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted" />
             <input className={inputCls + " pl-8"} placeholder="Código, nombre, correo o teléfono" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar" />
           </label>
-          <select className={inputCls} value={f.status} onChange={(e) => set("status", e.target.value)} aria-label="Estado">
-            <option value="">Todos los estados</option>
-            <option value="active">En curso</option>
-            {Object.entries(STATUS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v.label}
-              </option>
-            ))}
-          </select>
           <select className={inputCls} value={f.method} onChange={(e) => set("method", e.target.value)} aria-label="Método de pago">
             <option value="">Todos los pagos</option>
             {Object.entries(METHOD).map(([k, v]) => (
@@ -97,7 +95,7 @@ export default function Pedidos() {
             ))}
           </Table>
         )}
-        {data && <Pager page={data.page} total={data.total} size={data.size} onPage={(p) => setF((x) => ({ ...x, page: p }))} />}
+        {data && <Pager page={data.page} total={data.total} size={data.size} noun="pedidos" onPage={(p) => setF((x) => ({ ...x, page: p }))} />}
       </Card>
       <Drawer open={!!open} onClose={() => setOpen(null)} title="Detalle del pedido" wide>
         {open && <OrderDetail id={open} onChange={reload} />}

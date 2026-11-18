@@ -53,7 +53,7 @@ export default function Cupones() {
                   <Toggle checked={c.active} onChange={(v) => patch(c, { active: v })} label={`Activar ${c.code}`} />
                 </td>
                 <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => del(c)} aria-label={`Eliminar ${c.code}`} className="text-muted hover:text-red-300">
+                  <button onClick={() => del(c)} aria-label={`Eliminar ${c.code}`} className="text-muted hover:text-red-700">
                     <Trash2 className="size-4" />
                   </button>
                 </td>

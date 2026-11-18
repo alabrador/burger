@@ -107,7 +107,7 @@ export default function Cocina() {
                     <article key={o.id} className={cx("rounded-lg border bg-panel p-3", late ? "border-red/70" : "border-line")}>
                       <header className="mb-2 flex items-baseline justify-between gap-2">
                         <span className="font-display text-xl font-extrabold tracking-widest">{o.code}</span>
-                        <span className={cx("text-xs", late ? "font-bold text-red-300" : "text-muted")}>Recoge {hm(o.pickupAt)}</span>
+                        <span className={cx("text-xs", late ? "font-bold text-red-700" : "text-muted")}>Recoge {hm(o.pickupAt)}</span>
                       </header>
                       <div className="mb-2 text-xs text-muted">
                         {o.customerName} · {ago(o.paidAt ?? o.createdAt)}
@@ -115,12 +115,12 @@ export default function Cocina() {
                       <ul className="space-y-1.5">
                         {o.items.map((i) => (
                           <li key={i.id} className="text-sm">
-                            <b className="text-gold">{i.quantity}×</b> <b>{i.title}</b>
+                            <b className="text-gold-ink">{i.quantity}×</b> <b>{i.title}</b>
                             <div className="text-xs text-muted">{i.description}</div>
                           </li>
                         ))}
                       </ul>
-                      {o.notes && <p className="mt-2 rounded bg-amber-500/15 px-2 py-1 text-xs text-amber-200">Nota: {o.notes}</p>}
+                      {o.notes && <p className="mt-2 rounded bg-amber-500/15 px-2 py-1 text-xs text-amber-800">Nota: {o.notes}</p>}
                       <div className="mt-3">
                         {o.status === "confirmed" && (
                           <Btn variant="gold" className="w-full" onClick={() => move(o, "preparing")}>

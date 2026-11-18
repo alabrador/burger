@@ -11,7 +11,12 @@ const KEY = "catalog:v1";
 export async function loadCatalog(): Promise<Product[]> {
   return cached(KEY, 300, () => db().select().from(schema.products).orderBy(asc(schema.products.sort)));
 }
-export const invalidateCatalog = () => kv().del(KEY);
+export type Category = typeof schema.categories.$inferSelect;
+const CAT_KEY = "categories:v1";
+export async function loadCategories(): Promise<Category[]> {
+  return cached(CAT_KEY, 300, () => db().select().from(schema.categories).orderBy(asc(schema.categories.sort)));
+}
+export const invalidateCatalog = () => kv().del(KEY, CAT_KEY);
 
 export type PricedLine = {
   quantity: number;

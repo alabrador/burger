@@ -18,7 +18,7 @@ export default function Pagos() {
           <div key={p.id} className="rounded-xl border border-line bg-panel px-4 py-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold">{METHOD[p.id]}</span>
-              <span className={cx("rounded-full px-2 py-0.5 text-[10px] font-semibold", p.enabled ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-500/15 text-zinc-400")}>{p.enabled ? "Activo" : "Inactivo"}</span>
+              <span className={cx("rounded-full px-2 py-0.5 text-[10px] font-semibold", p.enabled ? "bg-emerald-500/15 text-emerald-700" : "bg-zinc-500/15 text-zinc-500")}>{p.enabled ? "Activo" : "Inactivo"}</span>
             </div>
             <div className="mt-1 font-display text-lg font-bold tabular-nums">{eur(p.paid)}</div>
             <div className="text-[11px] text-muted">30 días · reembolsado {eur(p.refunded)}</div>
@@ -46,7 +46,7 @@ export default function Pagos() {
               <tr key={r.id}>
                 <td className="px-4 py-2.5 text-xs text-muted">{dt(r.createdAt)}</td>
                 <td className="px-4 py-2.5">
-                  <a href={`/admin/pedidos?id=${r.orderId}`} className="font-mono font-bold hover:text-gold">
+                  <a href={`/admin/pedidos?id=${r.orderId}`} className="font-mono font-bold hover:text-gold-ink">
                     {r.code}
                   </a>
                   <div className="text-xs text-muted">{r.customerName}</div>
@@ -58,7 +58,7 @@ export default function Pagos() {
                 </td>
                 <td className="px-4 py-2.5 text-right tabular-nums">
                   {eur(r.amountCents)}
-                  {r.refundedCents > 0 && <div className="text-xs text-violet-300">−{eur(r.refundedCents)}</div>}
+                  {r.refundedCents > 0 && <div className="text-xs text-violet-700">−{eur(r.refundedCents)}</div>}
                 </td>
               </tr>
             ))}

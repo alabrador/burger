@@ -35,7 +35,7 @@ export default function Configuracion() {
       <PageHead title="Configuración" sub="Datos del local, horario, pedidos, correo y pasarelas de pago" />
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
         {TABS.map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx("-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap", tab === k ? "border-gold font-semibold text-gold" : "border-transparent text-muted hover:text-ink")}>
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={cx("-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap", tab === k ? "border-gold font-semibold text-gold-ink" : "border-transparent text-muted hover:text-ink")}>
             {l}
           </button>
         ))}
@@ -135,7 +135,7 @@ function Hours({ s, onSaved }: { s: S; onSaved: () => void }) {
                 <input type="time" className={inputCls + " w-28"} value={r.open} onChange={(e) => upd(d, (rs) => rs.map((x, j) => (j === i ? { ...x, open: e.target.value } : x)))} aria-label={`${DAYS[d]} apertura ${i + 1}`} />
                 –
                 <input type="time" className={inputCls + " w-28"} value={r.close} onChange={(e) => upd(d, (rs) => rs.map((x, j) => (j === i ? { ...x, close: e.target.value } : x)))} aria-label={`${DAYS[d]} cierre ${i + 1}`} />
-                <button onClick={() => upd(d, (rs) => rs.filter((_, j) => j !== i))} aria-label="Quitar tramo" className="p-1 text-muted hover:text-red-300">
+                <button onClick={() => upd(d, (rs) => rs.filter((_, j) => j !== i))} aria-label="Quitar tramo" className="p-1 text-muted hover:text-red-700">
                   <Trash2 className="size-4" />
                 </button>
               </span>
@@ -217,7 +217,7 @@ function Smtp({ s, onSaved }: { s: S; onSaved: () => void }) {
   };
   return (
     <div className="space-y-4">
-      <Card title="Servidor SMTP" actions={fromEnv && <span className="text-xs text-amber-300">Variables de entorno activas: tienen prioridad</span>}>
+      <Card title="Servidor SMTP" actions={fromEnv && <span className="text-xs text-amber-700">Variables de entorno activas: tienen prioridad</span>}>
         <form
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -280,7 +280,7 @@ function CopyUrl({ label, url }: { label: string; url: string }) {
     <div className="flex items-center gap-2 rounded-md bg-bg px-2.5 py-1.5 text-xs">
       <span className="text-muted">{label}:</span>
       <code className="min-w-0 flex-1 truncate">{url}</code>
-      <button type="button" onClick={() => navigator.clipboard.writeText(url).then(() => toast("Copiado"))} aria-label="Copiar" className="text-muted hover:text-gold">
+      <button type="button" onClick={() => navigator.clipboard.writeText(url).then(() => toast("Copiado"))} aria-label="Copiar" className="text-muted hover:text-gold-ink">
         <Copy className="size-3.5" />
       </button>
     </div>
@@ -298,7 +298,7 @@ function Payments({ s, onSaved }: { s: S; onSaved: () => void }) {
   const { save, busy } = useSave("payments", onSaved);
   const up = <K extends keyof typeof f>(k: K, v: Partial<(typeof f)[K]>) => setF((x) => ({ ...x, [k]: { ...x[k], ...v } }));
   const state = (ready: boolean, env: boolean) => (
-    <span className={cx("rounded-full px-2 py-0.5 text-[10px] font-semibold", ready ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-500/15 text-zinc-400")}>
+    <span className={cx("rounded-full px-2 py-0.5 text-[10px] font-semibold", ready ? "bg-emerald-500/15 text-emerald-700" : "bg-zinc-500/15 text-zinc-500")}>
       {ready ? "Listo" : "Sin activar"}
       {env ? " · env" : ""}
     </span>

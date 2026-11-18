@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
 import { DRACO, HEIGHT_OVERRIDE, MODELS, PROCEDURAL_HEIGHT, TRAY } from "@/lib/models";
+import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
 
 const MODEL_KEYS = Object.keys(MODELS);
@@ -67,6 +68,7 @@ function Layer({ layerKey, index, target, children }: LayerProps) {
 
 function Burger({ shift }: { shift: number }) {
   const { qty, protein, exploded, spinning, turn } = useBurger();
+  const models = useLive((s) => s.models);
   const spin360 = useRef({ seen: turn, left: 0 });
   const gltfs = useGLTF(MODEL_URLS, DRACO);
   const assets = useMemo(() => {
@@ -80,12 +82,12 @@ function Burger({ shift }: { shift: number }) {
   }, [gltfs]);
 
   const layers = useMemo(() => {
-    const keys = stackOrder(qty, protein);
+    const keys = stackOrder(qty, protein, models);
     const bases = keys.map((k) => k.split("#")[0]);
     const steps = bases.map((b) => (assets[b]?.h ?? PROCEDURAL_HEIGHT[b] ?? 0.003) - OVERLAP + (exploded ? EXPLODE_GAP : 0));
     const ys = steps.reduce<number[]>((acc, _, i) => [...acc, i === 0 ? 0 : acc[i - 1] + steps[i - 1]], []);
     return keys.map((key, i) => ({ key, base: bases[i], y: ys[i], i }));
-  }, [qty, protein, exploded, assets]);
+  }, [qty, protein, models, exploded, assets]);
 
   const top = layers.length ? layers[layers.length - 1].y + assets.bun_top.h : 0.08;
   const group = useRef<THREE.Group>(null);

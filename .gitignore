@@ -45,3 +45,4 @@ next-env.d.ts
 blender/glb/
 blender/bake_status.json
 blender/*.blend1
+dump.rdb

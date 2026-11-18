@@ -122,36 +122,73 @@ export const PRESETS: Preset[] = [
   { name: "Solo base", qty: {} },
 ];
 
-/** Orden de abajo hacia arriba. Devuelve claves únicas por capa (p. ej. "cheddar#1"). */
-export function stackOrder(qty: Qty, protein: ProteinId): string[] {
+/** Modelo 3D de cada ingrediente de la carta base (la clave de MODELS coincide con el id). */
+export type ModelMap = Record<string, { model: string | null }>;
+const STATIC_MODELS: ModelMap = Object.fromEntries(Object.keys(ITEMS).map((id) => [id, { model: id === "patty_x" ? null : id }]));
+
+const VEG = ["lettuce", "tomato", "onion", "pickles"];
+const CHEESE = ["cheddar", "swiss"];
+const TOP = ["caramel", "egg", "jalapeno", "house", "ketchup", "mustard", "bbq"];
+
+/**
+ * Orden de abajo hacia arriba. Devuelve claves únicas por capa (p. ej. "cheddar#1");
+ * lo que va antes de "#" es el modelo 3D. Un ingrediente creado en el admin se
+ * apila donde iría el modelo que reutiliza; si no tiene modelo, no sale en 3D.
+ */
+export function stackOrder(qty: Qty, protein: ProteinId, items: ModelMap = STATIC_MODELS): string[] {
+  const picked = Object.entries(qty)
+    .filter(([id, n]) => n > 0 && id !== "patty_x" && items[id]?.model)
+    .map(([id, n]) => ({ id, n, m: items[id].model! }));
+  const group = (models: string[]) =>
+    picked
+      .filter((p) => models.includes(p.m))
+      .sort((x, y) => models.indexOf(x.m) - models.indexOf(y.m) || (x.id === x.m ? -1 : y.id === y.m ? 1 : x.id.localeCompare(y.id)));
+  const known = new Set([...VEG, ...CHEESE, "bacon", ...TOP]);
+  const single = (p: { id: string; n: number; m: string }) =>
+    Array.from({ length: p.n }, (_, i) => (p.id === p.m && i === 0 ? p.m : `${p.m}#${p.id}-${i}`));
+
   const out = ["bun_bottom"];
-  for (const k of ["lettuce", "tomato", "onion", "pickles"]) if (qty[k]) out.push(k);
+  for (const p of group(VEG)) out.push(...single(p));
   const portions = 1 + (qty.patty_x ?? 0);
   const slices: string[] = [];
-  for (let i = 0; i < (qty.cheddar ?? 0); i++) slices.push("cheddar");
-  for (let i = 0; i < (qty.swiss ?? 0); i++) slices.push("swiss");
+  for (const p of group(CHEESE)) for (let i = 0; i < p.n; i++) slices.push(p.m);
   let s = 0;
   for (let p = 0; p < portions; p++) {
     out.push(`${protein === "angus" ? "patty" : protein}#${p}`);
     const take = p < portions - 1 ? Math.min(1, slices.length - s) : slices.length - s;
     for (let t = 0; t < take; t++, s++) out.push(`${slices[s]}#${s}`);
   }
-  for (let i = 0; i < (qty.bacon ?? 0); i++) out.push(`bacon#${i}`);
-  for (const k of ["caramel", "egg", "jalapeno", "house", "ketchup", "mustard", "bbq"]) if (qty[k]) out.push(k);
+  for (const p of group(["bacon"])) for (let i = 0; i < p.n; i++) out.push(p.id === "bacon" ? `bacon#${i}` : `bacon#${p.id}-${i}`);
+  // capas de proteína reutilizadas como extra (p. ej. otra carne) van sobre el tocino
+  for (const p of picked.filter((p) => !known.has(p.m))) out.push(...Array.from({ length: p.n }, (_, i) => `${p.m}#${p.id}-${i}`));
+  for (const p of group(TOP)) out.push(...single(p));
   out.push("bun_top");
   return out;
 }
 
-export function totals(qty: Qty, protein: ProteinId) {
+/** Precios vigentes (los del admin cuando ya se han cargado). */
+export type Prices = {
+  base: number;
+  surcharge: Record<ProteinId, number>;
+  items: Record<string, Pick<Item, "price" | "g" | "kcal">>;
+};
+export const STATIC_PRICES: Prices = {
+  base: BASE_PRICE,
+  surcharge: Object.fromEntries(Object.entries(PROTEINS).map(([k, p]) => [k, p.surcharge])) as Record<ProteinId, number>,
+  items: ITEMS,
+};
+
+export function totals(qty: Qty, protein: ProteinId, pr: Prices = STATIC_PRICES) {
   const P = PROTEINS[protein];
-  let price = BASE_PRICE + P.surcharge;
+  const sur = pr.surcharge[protein] ?? P.surcharge;
+  let price = pr.base + sur;
   let g = BUN.g + P.g;
   let kcal = BUN.kcal + P.kcal;
   for (const [id, n] of Object.entries(qty)) {
-    const it = ITEMS[id];
+    const it = pr.items[id];
     if (!it || !n) continue;
     if (id === "patty_x") {
-      price += (it.price + P.surcharge) * n;
+      price += (it.price + sur) * n;
       g += P.g * n;
       kcal += P.kcal * n;
     } else {

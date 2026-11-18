@@ -52,7 +52,7 @@ export default function Cuenta() {
         <Card title="Verificación en dos pasos (2FA)">
           {me.totpEnabled ? (
             <form className="space-y-3" onSubmit={disable}>
-              <p className="flex items-center gap-2 text-sm text-emerald-300">
+              <p className="flex items-center gap-2 text-sm text-emerald-700">
                 <ShieldCheck className="size-4" /> Activada
               </p>
               <Field label="Contraseña">
@@ -77,7 +77,7 @@ export default function Cuenta() {
             </form>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-amber-300">Sin activar. Recomendado para todo el personal, obligatorio para dueños y administradores.</p>
+              <p className="text-sm text-amber-700">Sin activar. Recomendado para todo el personal, obligatorio para dueños y administradores.</p>
               <Btn variant="gold" onClick={() => api<{ qr: string; secret: string }>("/api/admin/account/2fa").then(setSetup)}>
                 Configurar 2FA
               </Btn>

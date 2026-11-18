@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import { ITEMS, PRESETS, type CategoryId, type Doneness, type DrinkId, type DrinkVariant, type ProteinId, type Qty } from "./catalog";
+import { useLive } from "./live";
+import { PRESETS, type CategoryId, type Doneness, type DrinkId, type DrinkVariant, type ProteinId, type Qty } from "./catalog";
 
-export type Section = "base" | CategoryId | "papas" | "bebida";
+export type Section = "base" | CategoryId | "papas" | "bebida" | (string & {});
 
 type State = {
   qty: Qty;
@@ -55,7 +56,7 @@ export const useBurger = create<State>((set) => ({
   setDrinkVariant: (drinkVariant) => set({ drinkVariant }),
   setQty: (id, n) =>
     set((s) => ({
-      qty: clean({ ...s.qty, [id]: Math.max(0, Math.min(ITEMS[id]?.max ?? 1, n)) }),
+      qty: clean({ ...s.qty, [id]: Math.max(0, Math.min(useLive.getState().items[id]?.max ?? 1, n)) }),
       activePreset: null,
     })),
   toggle: (id) => set((s) => ({ qty: clean({ ...s.qty, [id]: s.qty[id] ? 0 : 1 }), activePreset: null })),
@@ -64,7 +65,10 @@ export const useBurger = create<State>((set) => ({
   applyPreset: (name) => {
     const p = PRESETS.find((x) => x.name === name);
     if (!p) return;
-    set((s) => ({ qty: { ...p.qty }, protein: p.protein ?? s.protein, activePreset: name }));
+    // solo lo que sigue en la carta y no está agotado
+    const items = useLive.getState().items;
+    const qty = Object.fromEntries(Object.entries(p.qty).filter(([id]) => items[id] && !items[id].soldOut));
+    set((s) => ({ qty, protein: p.protein ?? s.protein, activePreset: name }));
   },
   setExploded: (exploded) => set({ exploded }),
   setSpinning: (spinning) => set({ spinning }),

@@ -43,7 +43,7 @@ export default function Usuarios() {
               <td className="px-4 py-2.5">
                 <div className="font-medium">{u.name}</div>
                 <div className="text-xs text-muted">{u.email}</div>
-                {u.lockedUntil && new Date(u.lockedUntil) > new Date() && <div className="text-xs text-red-300">Bloqueado por intentos fallidos</div>}
+                {u.lockedUntil && new Date(u.lockedUntil) > new Date() && <div className="text-xs text-red-700">Bloqueado por intentos fallidos</div>}
               </td>
               <td className="px-4 py-2.5">
                 <select className={inputCls + " h-8 w-40"} value={u.role} disabled={u.id === me.id || (u.role === "owner" && me.role !== "owner")} onChange={(e) => patch(u, { role: e.target.value }, "Rol cambiado")} aria-label={`Rol de ${u.name}`}>
@@ -56,7 +56,7 @@ export default function Usuarios() {
                     ))}
                 </select>
               </td>
-              <td className="px-4 py-2.5 text-xs">{u.totpEnabled ? <span className="text-emerald-300">Activa</span> : <span className="text-amber-300">No</span>}</td>
+              <td className="px-4 py-2.5 text-xs">{u.totpEnabled ? <span className="text-emerald-700">Activa</span> : <span className="text-amber-700">No</span>}</td>
               <td className="px-4 py-2.5 text-xs text-muted">{dt(u.lastLoginAt)}</td>
               <td className="px-4 py-2.5">
                 <Toggle checked={u.active} disabled={u.id === me.id} onChange={(v) => patch(u, { active: v })} label={`Activo ${u.name}`} />

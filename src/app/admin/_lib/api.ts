@@ -51,19 +51,19 @@ export const ago = (s: string | Date) => {
 };
 
 export const STATUS: Record<string, { label: string; cls: string }> = {
-  pending_payment: { label: "Pendiente de pago", cls: "bg-zinc-500/15 text-zinc-300 ring-zinc-500/30" },
-  confirmed: { label: "Nuevo", cls: "bg-sky-500/15 text-sky-300 ring-sky-500/30" },
-  preparing: { label: "En preparación", cls: "bg-amber-500/15 text-amber-300 ring-amber-500/30" },
-  ready: { label: "Listo", cls: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30" },
-  collected: { label: "Entregado", cls: "bg-zinc-500/10 text-zinc-400 ring-zinc-500/20" },
-  cancelled: { label: "Cancelado", cls: "bg-red-500/15 text-red-300 ring-red-500/30" },
+  pending_payment: { label: "Pendiente de pago", cls: "bg-zinc-500/15 text-zinc-700 ring-zinc-500/30" },
+  confirmed: { label: "Nuevo", cls: "bg-sky-500/15 text-sky-700 ring-sky-500/30" },
+  preparing: { label: "En preparación", cls: "bg-amber-500/15 text-amber-700 ring-amber-500/30" },
+  ready: { label: "Listo", cls: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30" },
+  collected: { label: "Entregado", cls: "bg-zinc-500/10 text-zinc-500 ring-zinc-500/20" },
+  cancelled: { label: "Cancelado", cls: "bg-red-500/15 text-red-700 ring-red-500/30" },
 };
 export const PAY: Record<string, { label: string; cls: string }> = {
-  pending: { label: "Sin pagar", cls: "text-zinc-400" },
-  paid: { label: "Pagado", cls: "text-emerald-400" },
-  failed: { label: "Fallido", cls: "text-red-400" },
-  refunded: { label: "Reembolsado", cls: "text-violet-300" },
-  partially_refunded: { label: "Reemb. parcial", cls: "text-violet-300" },
+  pending: { label: "Sin pagar", cls: "bg-zinc-500/10 text-zinc-600 ring-zinc-500/25" },
+  paid: { label: "Pagado", cls: "bg-emerald-500/12 text-emerald-700 ring-emerald-500/30" },
+  failed: { label: "Fallido", cls: "bg-red-500/10 text-red-700 ring-red-500/30" },
+  refunded: { label: "Reembolsado", cls: "bg-violet-500/10 text-violet-700 ring-violet-500/30" },
+  partially_refunded: { label: "Reemb. parcial", cls: "bg-violet-500/10 text-violet-700 ring-violet-500/30" },
 };
 export const METHOD: Record<string, string> = { stripe: "Tarjeta", paypal: "PayPal", bizum: "Bizum", cash: "Efectivo" };
 export const ROLE: Record<string, string> = { owner: "Dueño", admin: "Administrador", manager: "Encargado", kitchen: "Cocina", cashier: "Caja" };

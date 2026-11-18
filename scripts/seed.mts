@@ -31,26 +31,42 @@ const ALLERGENS: Record<string, string[]> = {
   egg: ["huevo"],
 };
 
-type Row = { id: string; kind: string; category: string; name: string; description: string | null; price_cents: number; grams: number; kcal: number; max_qty: number; allergens: string[]; sort: number };
+type Row = { id: string; kind: string; category: string; name: string; description: string | null; price_cents: number; grams: number; kcal: number; max_qty: number; allergens: string[]; sort: number; model: string | null; swatch: string };
 const rows: Row[] = [];
 let sort = 0;
-rows.push({ id: "burger", kind: "base", category: "base", name: "Hamburguesa (pan brioche + papas)", description: "Pan brioche y papas fritas incluidas", price_cents: c(BASE_PRICE), grams: 85, kcal: 270, max_qty: 1, allergens: ALLERGENS.burger, sort: sort++ });
+rows.push({ id: "burger", kind: "base", category: "base", name: "Hamburguesa (pan brioche + papas)", description: "Pan brioche y papas fritas incluidas", price_cents: c(BASE_PRICE), grams: 85, kcal: 270, max_qty: 1, allergens: ALLERGENS.burger, sort: sort++, model: null, swatch: "#c9792e" });
 for (const [id, p] of Object.entries(PROTEINS))
-  rows.push({ id, kind: "protein", category: "carne", name: p.label, description: p.note, price_cents: c(p.surcharge), grams: p.g, kcal: p.kcal, max_qty: 1, allergens: ALLERGENS[id] ?? [], sort: sort++ });
+  rows.push({ id, kind: "protein", category: "carne", name: p.label, description: p.note, price_cents: c(p.surcharge), grams: p.g, kcal: p.kcal, max_qty: 1, allergens: ALLERGENS[id] ?? [], sort: sort++, model: id === "angus" ? "patty" : id, swatch: p.swatch });
 for (const cat of CATALOG)
   for (const it of cat.items)
-    rows.push({ id: it.id, kind: "ingredient", category: cat.id, name: it.name, description: it.note ?? null, price_cents: c(it.price), grams: it.g, kcal: it.kcal, max_qty: it.max, allergens: ALLERGENS[it.id] ?? [], sort: sort++ });
+    rows.push({ id: it.id, kind: "ingredient", category: cat.id, name: it.name, description: it.note ?? null, price_cents: c(it.price), grams: it.g, kcal: it.kcal, max_qty: it.max, allergens: ALLERGENS[it.id] ?? [], sort: sort++, model: it.id === "patty_x" ? null : it.id, swatch: it.swatch });
 for (const [id, d] of Object.entries(DRINKS))
   for (const v of ["normal", "zero"] as const)
-    rows.push({ id: v === "zero" ? `${id}_zero` : id, kind: "drink", category: "bebidas", name: v === "zero" ? `${d.name} Zero` : d.name, description: "Lata 355 ml", price_cents: c(DRINK_PRICE), grams: 355, kcal: v === "zero" ? 1 : 140, max_qty: 1, allergens: [], sort: sort++ });
+    rows.push({ id: v === "zero" ? `${id}_zero` : id, kind: "drink", category: "bebidas", name: v === "zero" ? `${d.name} Zero` : d.name, description: "Lata 355 ml", price_cents: c(DRINK_PRICE), grams: 355, kcal: v === "zero" ? 1 : 140, max_qty: 1, allergens: [], sort: sort++, model: null, swatch: d.color });
 
+// Categorías: se crean una vez; luego se gestionan en el admin.
+const CATS: [string, string, boolean][] = [
+  ["base", "Base del combo", true],
+  ["carne", "Carne", true],
+  ["quesos", "Quesos", false],
+  ["vegetales", "Vegetales", false],
+  ["salsas", "Salsas", false],
+  ["extras", "Extras", false],
+  ["bebidas", "Bebidas", true],
+];
+for (const [i, [id, name, locked]] of CATS.entries()) await sql`insert into categories (id, name, sort, locked) values (${id}, ${name}, ${i}, ${locked}) on conflict (id) do nothing`;
+
+// Productos nuevos de la carta base se añaden; los existentes no se tocan (precio, categoría y orden se editan en el admin).
+const [done] = await sql`select 1 from settings where key = 'seed:v2'`;
 for (const r of rows) {
   await sql`
     insert into products ${sql(r)}
-    on conflict (id) do update set kind = excluded.kind, category = excluded.category, sort = excluded.sort
-      ${force ? sql`, name = excluded.name, description = excluded.description, grams = excluded.grams, kcal = excluded.kcal, max_qty = excluded.max_qty, price_cents = excluded.price_cents, allergens = excluded.allergens` : sql``}
+    on conflict (id) do update set kind = excluded.kind
+      ${!done ? sql`, model = excluded.model, swatch = excluded.swatch` : sql``}
+      ${force ? sql`, name = excluded.name, description = excluded.description, grams = excluded.grams, kcal = excluded.kcal, max_qty = excluded.max_qty, price_cents = excluded.price_cents, allergens = excluded.allergens, category = excluded.category, sort = excluded.sort` : sql``}
   `;
 }
+if (!done) await sql`insert into settings (key, value) values ('seed:v2', 'true'::jsonb) on conflict do nothing`;
 console.log(`Productos: ${rows.length}`);
 
 const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();

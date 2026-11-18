@@ -28,17 +28,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BUN,
   DRINKS,
-  DRINK_PRICE,
-  CATALOG,
   PROTEINS,
   money,
   stackOrder,
   thumb,
   totals,
   type DrinkId,
-  type Item,
   type ProteinId,
 } from "@/lib/catalog";
+import { useLive, type LiveItem } from "@/lib/live";
 import { useBurger, type Section } from "@/lib/store";
 import Checkout from "./Checkout";
 import {
@@ -102,12 +100,15 @@ const soon = (what: string) => showToast(`${what}: disponible próximamente.`);
 function useTotals() {
   const qty = useBurger((s) => s.qty);
   const protein = useBurger((s) => s.protein);
-  const t = useMemo(() => totals(qty, protein), [qty, protein]);
-  const layers = useMemo(() => stackOrder(qty, protein).length, [qty, protein]);
+  const prices = useLive((s) => s.prices);
+  const models = useLive((s) => s.models);
+  const drinkPrice = useLive((s) => s.drinkPrice);
+  const t = useMemo(() => totals(qty, protein, prices), [qty, protein, prices]);
+  const layers = useMemo(() => stackOrder(qty, protein, models).length, [qty, protein, models]);
   const drink = useBurger((s) => s.drink);
   const count = useBurger((s) => s.count);
   /** precio de un combo: hamburguesa + papas (incluidas) + bebida */
-  const unit = t.price + (drink ? DRINK_PRICE : 0);
+  const unit = t.price + (drink ? drinkPrice : 0);
   return { ...t, layers, unit, count, total: unit * count };
 }
 
@@ -117,6 +118,10 @@ function useAddToCart() {
 }
 
 export default function Configurator() {
+  const load = useLive((s) => s.load);
+  useEffect(() => {
+    load();
+  }, [load]);
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <Header />
@@ -408,6 +413,7 @@ function IngredientPanel() {
       ro.disconnect();
     };
   }, []);
+  const cats = useLive((s) => s.cats);
 
   return (
     <section
@@ -442,8 +448,8 @@ function IngredientPanel() {
         className="pro-scroll relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-6 lg:px-4"
       >
         <CarneGroup />
-        {CATALOG.filter((c) => c.id !== "carne").map((c) => (
-          <Group key={c.id} id={c.id} count={c.items.length}>
+        {cats.filter((c) => c.id !== "carne" && c.items.length).map((c) => (
+          <Group key={c.id} id={c.id} label={c.name} count={c.items.length}>
             {c.items.map((it) => (
               <ItemTile key={it.id} item={it} />
             ))}
@@ -457,19 +463,22 @@ function IngredientPanel() {
 
 function Group({
   id,
+  label,
   children,
   extra,
   count,
 }: {
   id: Section;
+  label?: string;
   children: React.ReactNode;
   extra?: React.ReactNode;
   count?: number;
 }) {
-  const S = SECTIONS.find((s) => s.id === id)!;
+  const S = { icon: CirclePlus, ...SECTIONS.find((s) => s.id === id), label: label ?? SECTIONS.find((s) => s.id === id)?.label ?? id };
   const qty = useBurger((s) => s.qty);
+  const cats = useLive((s) => s.cats);
   const picked =
-    CATALOG.find((c) => c.id === id)?.items.filter((i) => qty[i.id]).length ??
+    cats.find((c) => c.id === id)?.items.filter((i) => qty[i.id]).length ??
     0;
   return (
     <section id={`grp-${id}`} aria-label={S.label} className="pb-3">
@@ -518,34 +527,41 @@ function TileText({ name, sub }: { name: string; sub?: string }) {
   );
 }
 
-function ItemTile({ item }: { item: Item }) {
+function ItemTile({ item }: { item: LiveItem }) {
   const protein = useBurger((s) => s.protein);
+  const surcharge = useLive((s) => s.prices.surcharge[protein]);
   const n = useBurger((s) => s.qty[item.id] ?? 0);
   const setQty = useBurger((s) => s.setQty);
   const on = n > 0;
-  const art =
-    item.id in SAUCE_BOTTLE ? (
-      <SauceBottle
-        color={item.swatch}
-        cap={SAUCE_BOTTLE[item.id]}
-        className="size-9"
-      />
-    ) : (
-      <Thumb src={thumb(item.id, protein)} size={36} />
-    );
+  const out = item.soldOut && !on;
+  const art = item.img ? (
+    // eslint-disable-next-line @next/next/no-img-element -- foto subida en el admin
+    <img src={item.img} alt="" className="mx-auto size-9 rounded-md object-cover drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]" />
+  ) : item.model && item.model in SAUCE_BOTTLE ? (
+    <SauceBottle
+      color={item.swatch}
+      cap={SAUCE_BOTTLE[item.model]}
+      className="size-9"
+    />
+  ) : item.model || item.id === "patty_x" ? (
+    <Thumb src={thumb(item.id === "patty_x" ? item.id : item.model!, protein)} size={36} />
+  ) : (
+    <span className="mx-auto block size-9 rounded-full ring-2 ring-white/15" style={{ background: item.swatch }} />
+  );
   return (
-    <div className={`${tileCls} ${on ? tileOn : tileOff}`}>
+    <div className={`${tileCls} ${on ? tileOn : tileOff} ${out ? "opacity-45" : ""}`}>
       <button
         type="button"
         aria-pressed={on}
+        disabled={out}
         onClick={() => setQty(item.id, on ? 0 : 1)}
-        className="flex w-full flex-1 flex-col items-center"
-        aria-label={`${item.name}${on ? ", elegido" : ""}`}
+        className="flex w-full flex-1 flex-col items-center disabled:cursor-not-allowed"
+        aria-label={`${item.name}${on ? ", elegido" : out ? ", agotado" : ""}`}
       >
         {art}
         <TileText
           name={item.name}
-          sub={on && item.max > 1 ? undefined : priceLabel(item, protein)}
+          sub={out ? "Agotado" : on && item.max > 1 ? undefined : priceLabel(item, surcharge)}
         />
       </button>
       {on && item.max > 1 && (
@@ -609,42 +625,52 @@ function Chips<T extends string>({
 
 function CarneGroup() {
   const { protein, setProtein } = useBurger();
-  const extra = CATALOG.find((c) => c.id === "carne")!.items[0];
+  const carne = useLive((s) => s.cats.find((c) => c.id === "carne"));
+  const proteins = useLive((s) => s.proteins);
+  const surcharge = useLive((s) => s.prices.surcharge);
   return (
-    <Group id="carne">
-      {(Object.keys(PROTEINS) as ProteinId[]).map((k) => {
-        const P = PROTEINS[k];
+    <Group id="carne" label={carne?.name}>
+      {(Object.keys(proteins) as ProteinId[]).filter((k) => proteins[k].available).map((k) => {
         const on = protein === k;
+        const out = proteins[k].soldOut && !on;
         return (
           <button
             key={k}
             type="button"
             aria-pressed={on}
+            disabled={out}
             onClick={() => setProtein(k)}
-            className={`${tileCls} ${on ? tileOn : tileOff}`}
+            className={`${tileCls} ${on ? tileOn : tileOff} ${out ? "cursor-not-allowed opacity-45" : ""}`}
           >
             <Thumb src={thumb("protein", k)} size={36} />
             <TileText
               name={
-                k === "angus"
-                  ? "Angus 250 g"
-                  : k === "grilled"
-                    ? "Pollo plancha"
-                    : "Pollo crispy"
+                // si el admin la renombra se ve su nombre; si no, el corto de siempre
+                proteins[k].name !== PROTEINS[k].label
+                  ? proteins[k].name
+                  : k === "angus"
+                    ? "Angus 250 g"
+                    : k === "grilled"
+                      ? "Pollo plancha"
+                      : "Pollo crispy"
               }
-              sub={P.surcharge ? `+${money(P.surcharge)}` : "Incluido"}
+              sub={out ? "Agotado" : surcharge[k] ? `+${money(surcharge[k])}` : "Incluido"}
             />
             {on && <Tick />}
           </button>
         );
       })}
-      <ItemTile item={{ ...extra, name: "Doble carne" }} />
+      {carne?.items.map((it) => (
+        <ItemTile key={it.id} item={it.id === "patty_x" ? { ...it, name: "Doble carne" } : it} />
+      ))}
     </Group>
   );
 }
 
 function BebidaGroup() {
   const { drink, drinkVariant, setDrink, setDrinkVariant } = useBurger();
+  const drinkPrice = useLive((s) => s.drinkPrice);
+  const drinksOut = useLive((s) => s.drinksOut);
   return (
     <Group
       id="bebida"
@@ -662,13 +688,15 @@ function BebidaGroup() {
     >
       {([null, "coca", "sprite"] as (DrinkId | null)[]).map((k) => {
         const on = drink === k;
+        const out = !!k && !on && drinksOut.has(drinkVariant === "zero" ? `${k}_zero` : k);
         return (
           <button
             key={k ?? "none"}
             type="button"
             aria-pressed={on}
+            disabled={out}
             onClick={() => setDrink(k)}
-            className={`${tileCls} ${on ? tileOn : tileOff}`}
+            className={`${tileCls} ${on ? tileOn : tileOff} ${out ? "cursor-not-allowed opacity-45" : ""}`}
           >
             {k ? (
               <CanArt
@@ -683,7 +711,7 @@ function BebidaGroup() {
             )}
             <TileText
               name={k ? DRINKS[k].name : "Sin bebida"}
-              sub={k ? `+${money(DRINK_PRICE)}` : "—"}
+              sub={out ? "Agotado" : k ? `+${money(drinkPrice)}` : "—"}
             />
             {on && <Tick />}
           </button>
@@ -714,9 +742,8 @@ function Thumb({ src, size = 44 }: { src: string; size?: number }) {
   );
 }
 
-function priceLabel(it: Item, protein: ProteinId) {
-  const p =
-    it.id === "patty_x" ? it.price + PROTEINS[protein].surcharge : it.price;
+function priceLabel(it: LiveItem, surcharge: number) {
+  const p = it.id === "patty_x" ? it.price + surcharge : it.price;
   return p ? `+${money(p)}` : "Gratis";
 }
 

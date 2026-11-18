@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigserial,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -90,10 +91,38 @@ export const products = pgTable(
     active: boolean("active").notNull().default(true),
     soldOut: boolean("sold_out").notNull().default(false),
     sort: integer("sort").notNull().default(0),
+    /** modelo 3D (clave de MODELS) con el que se pinta en la hamburguesa; null = no aparece en 3D */
+    model: text("model"),
+    /** color de muestra para salsas y miniaturas sin foto */
+    swatch: text("swatch").notNull().default("#c9792e"),
+    /** versión de la foto subida en el admin (0 = sin foto) */
+    imageV: integer("image_v").notNull().default(0),
+    /** creado desde el admin (se puede borrar); los de la carta base solo se ocultan */
+    custom: boolean("custom").notNull().default(false),
     updatedAt: ts("updated_at").notNull().defaultNow(),
   },
   (t) => [index("products_category_idx").on(t.category, t.sort)],
 );
+
+export const categories = pgTable("categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  sort: integer("sort").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  /** base, carne y bebidas son fijas: no se borran */
+  locked: boolean("locked").notNull().default(false),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
+export const productImages = pgTable("product_images", {
+  productId: text("product_id")
+    .primaryKey()
+    .references(() => products.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  data: bytea("data").notNull(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
 
 /* ---------- clientes y pedidos ---------- */
 
