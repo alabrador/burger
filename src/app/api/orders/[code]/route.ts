@@ -1,5 +1,7 @@
 import { ApiError, handle, json, limit } from "@/server/http";
-import { getOrderByCode } from "@/server/orders";
+import { getOrderByCode, markPaid } from "@/server/orders";
+import { stripeFindPaid } from "@/server/payments/stripe";
+import { kv } from "@/server/redis";
 import { getSettings } from "@/server/settings";
 import { checkTrackToken, qrPayload } from "@/server/tokens";
 
@@ -9,8 +11,20 @@ export const GET = handle<RouteContext<"/api/orders/[code]">>(async (req, ctx) =
   const { code } = await ctx.params;
   const t = req.nextUrl.searchParams.get("t") || "";
   if (!/^[A-Z0-9]{4,12}$/.test(code) || !checkTrackToken(code, t)) throw new ApiError(404, "Pedido no encontrado", "not_found");
-  const r = await getOrderByCode(code);
+  let r = await getOrderByCode(code);
   if (!r) throw new ApiError(404, "Pedido no encontrado", "not_found");
+  // Respaldo del webhook: si el pago con tarjeta sigue pendiente, se pregunta a Stripe (como mucho cada 8 s).
+  if (r.order.paymentMethod === "stripe" && r.order.paymentStatus === "pending" && (await kv().setNx(`stripe:check:${r.order.id}`, "1", 8))) {
+    try {
+      const paid = await stripeFindPaid(r.order.id);
+      if (paid) {
+        await markPaid(r.order.id, "stripe", paid.ref, paid.amountCents, { via: "consulta" });
+        r = (await getOrderByCode(code)) ?? r;
+      }
+    } catch (e) {
+      console.error("[stripe] comprobación de respaldo", e);
+    }
+  }
   const { order: o, items, events } = r;
   const st = (await getSettings()).store;
   return json({

@@ -36,3 +36,14 @@ export async function stripeRefund(paymentIntent: string, amountCents: number, o
   const r = await s.refunds.create({ payment_intent: paymentIntent, amount: amountCents }, { idempotencyKey: `refund-${orderId}-${amountCents}` });
   return r.id;
 }
+
+/**
+ * Comprobación de respaldo por si el webhook no llega (mal configurado, caído, etc.):
+ * busca en Stripe un cobro completado de este pedido y lo marca como pagado.
+ */
+export async function stripeFindPaid(orderId: string) {
+  const { s } = await stripe();
+  const r = await s.paymentIntents.search({ query: `metadata['orderId']:'${orderId}' AND status:'succeeded'`, limit: 1 });
+  const pi = r.data[0];
+  return pi ? { ref: pi.id, amountCents: pi.amount_received } : null;
+}
