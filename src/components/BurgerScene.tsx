@@ -1,23 +1,11 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import {
-  ContactShadows,
-  Environment,
-  Lightformer,
-  useGLTF,
-} from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
-import {
-  CONTACT,
-  DRACO,
-  MODELS,
-  PROCEDURAL_HEIGHT,
-  SCALE_Y,
-  TRAY,
-} from "@/lib/models";
+import { CONTACT, DRACO, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
 import { cloudOf, settle, type Cloud } from "@/lib/settle";
 import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
@@ -90,10 +78,7 @@ function Burger({ shift }: { shift: number }) {
   const spin360 = useRef({ seen: turn, left: 0 });
   const gltfs = useGLTF(MODEL_URLS, DRACO);
   const assets = useMemo(() => {
-    const out: Record<
-      string,
-      { scene: THREE.Object3D; h: number; cloud: Cloud }
-    > = {};
+    const out: Record<string, { scene: THREE.Object3D; h: number; cloud: Cloud }> = {};
     MODEL_KEYS.forEach((k, i) => {
       const scene = gltfs[i].scene;
       prepare(scene);
@@ -125,9 +110,7 @@ function Burger({ shift }: { shift: number }) {
     }));
   }, [qty, protein, models, exploded, assets]);
 
-  const top = layers.length
-    ? layers[layers.length - 1].y + assets.bun_top.h
-    : 0.08;
+  const top = layers.length ? layers[layers.length - 1].y + assets.bun_top.h : 0.08;
   const group = useRef<THREE.Group>(null);
   const drag = useRef({ active: false, x: 0, v: 0 });
   const camState = useRef({ y: 0.05, d: 0.5 });
@@ -199,12 +182,7 @@ function Burger({ shift }: { shift: number }) {
         <group position-y={TRAY_TOP}>
           {layers.map((l) => (
             <Layer key={l.key} layerKey={l.key} index={l.i} target={l.y}>
-              {assets[l.base] && (
-                <primitive
-                  object={assets[l.base].scene.clone(true)}
-                  scale-y={SCALE_Y[l.base] ?? 1}
-                />
-              )}
+              {assets[l.base] && <primitive object={assets[l.base].scene.clone(true)} scale-y={SCALE_Y[l.base] ?? 1} />}
             </Layer>
           ))}
         </group>
@@ -238,41 +216,13 @@ function Lights() {
         shadow-camera-near={0.01}
         shadow-camera-far={0.6}
       />
-      <directionalLight
-        position={[-0.12, 0.09, -0.14]}
-        intensity={0.7}
-        color="#cfe0ff"
-      />
+      <directionalLight position={[-0.12, 0.09, -0.14]} intensity={0.7} color="#cfe0ff" />
       {/* Estudio de luces suave para los reflejos (sin descargar HDRI). */}
       <Environment resolution={256}>
-        <Lightformer
-          form="rect"
-          intensity={2.2}
-          color="#fff3e2"
-          position={[0, 3, 2]}
-          scale={[6, 3, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={1.2}
-          color="#ffe2bd"
-          position={[-4, 1, -1]}
-          scale={[3, 4, 1]}
-        />
-        <Lightformer
-          form="rect"
-          intensity={0.8}
-          color="#dfe8ff"
-          position={[4, 1, -2]}
-          scale={[3, 4, 1]}
-        />
-        <Lightformer
-          form="ring"
-          intensity={0.6}
-          color="#ffffff"
-          position={[0, 5, 0]}
-          scale={2}
-        />
+        <Lightformer form="rect" intensity={2.2} color="#fff3e2" position={[0, 3, 2]} scale={[6, 3, 1]} />
+        <Lightformer form="rect" intensity={1.2} color="#ffe2bd" position={[-4, 1, -1]} scale={[3, 4, 1]} />
+        <Lightformer form="rect" intensity={0.8} color="#dfe8ff" position={[4, 1, -2]} scale={[3, 4, 1]} />
+        <Lightformer form="ring" intensity={0.6} color="#ffffff" position={[0, 5, 0]} scale={2} />
       </Environment>
     </>
   );
@@ -306,13 +256,7 @@ export default function BurgerScene({ shift = 0 }: { shift?: number }) {
       <Suspense fallback={<Loader />}>
         <Burger shift={shift} />
       </Suspense>
-      <ContactShadows
-        position={[0, -0.0005, 0]}
-        opacity={0.5}
-        scale={0.5}
-        blur={2.4}
-        far={0.2}
-      />
+      <ContactShadows position={[0, -0.0005, 0]} opacity={0.5} scale={0.5} blur={2.4} far={0.2} />
     </Canvas>
   );
 }

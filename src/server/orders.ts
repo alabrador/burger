@@ -81,7 +81,7 @@ export async function quote(lines: z.infer<typeof lineSchema>[], coupon?: string
 }
 
 /** Hora de recogida: lo antes posible o una hora concreta dentro del horario. */
-async function resolvePickup(pickup: string) {
+export async function resolvePickup(pickup: string) {
   const st = await getSettings();
   const now = Date.now();
   const earliest = now + st.orders.prepMinutes * 60_000;

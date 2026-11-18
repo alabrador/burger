@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { db, schema } from "@/server/db";
 import { handle, json } from "@/server/http";
 import { markPaid, markPaymentFailed } from "@/server/orders";
+import { finalizeCard } from "@/server/payments/card";
 import { stripe } from "@/server/payments/stripe";
 
 /** Webhook de Stripe: payment_intent.* (formulario embebido) y checkout.session.* (página de Stripe) */
@@ -19,6 +20,8 @@ export const POST = handle(async (req) => {
     const pi = ev.data.object as Stripe.PaymentIntent;
     const id = pi.metadata?.orderId;
     if (id && ev.type === "payment_intent.succeeded") await markPaid(id, "stripe", pi.id, pi.amount_received);
+    // Pago con tarjeta embebido: si el cliente cerró la web tras pagar, el pedido se crea aquí.
+    if (pi.metadata?.draft && ev.type === "payment_intent.succeeded") await finalizeCard(pi.metadata.draft).catch((e) => console.error("[tarjeta] webhook", e));
     // Un fallo con tarjeta no cancela el pedido: el cliente puede reintentar en el mismo formulario.
     await db().insert(schema.webhookEvents).values({ provider: "stripe", eventId: ev.id }).onConflictDoNothing();
     return json({ received: true });

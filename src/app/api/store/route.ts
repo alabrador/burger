@@ -11,6 +11,7 @@ export const GET = handle(async () => {
       open: isOpenAt(st.store, new Date()),
       ordering: { enabled: st.orders.enabled, pausedMessage: st.orders.pausedMessage, prepMinutes: st.orders.prepMinutes, slotMinutes: st.orders.slotMinutes, maxBurgers: st.orders.maxBurgersPerOrder, taxRateBp: st.orders.taxRateBp },
       payments: (["stripe", "bizum", "paypal", "cash"] as const).filter((m) => pay[m].enabled),
+      stripeKey: pay.stripe.enabled ? pay.stripe.publishableKey || null : null,
       products: cat.map((p) => ({ id: p.id, priceCents: p.priceCents, available: p.active && !p.soldOut, allergens: p.allergens })),
     },
     { headers: { "Cache-Control": "public, max-age=10, s-maxage=10, stale-while-revalidate=30" } },

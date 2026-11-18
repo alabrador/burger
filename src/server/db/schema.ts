@@ -267,6 +267,17 @@ export const webhookEvents = pgTable(
   (t) => [primaryKey({ columns: [t.provider, t.eventId] })],
 );
 
+/** Pago con tarjeta antes de crear el pedido: los datos del pedido esperan aquí hasta que Stripe confirma el cobro. */
+export const cardDrafts = pgTable("card_drafts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  payload: jsonb("payload").notNull(),
+  ip: text("ip").notNull().default(""),
+  totalCents: integer("total_cents").notNull(),
+  paymentIntentId: text("payment_intent_id"),
+  orderId: uuid("order_id"),
+  createdAt: created(),
+});
+
 /* ---------- promociones ---------- */
 
 export const couponType = pgEnum("coupon_type", ["percent", "fixed"]);

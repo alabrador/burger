@@ -6,7 +6,17 @@ let cache: { key: string; s: Stripe } | null = null;
 export async function stripe() {
   const c = (await paymentConfig()).stripe;
   if (!c.secretKey) throw new Error("Stripe no configurado");
-  if (cache?.key !== c.secretKey) cache = { key: c.secretKey, s: new Stripe(c.secretKey, { maxNetworkRetries: 2, timeout: 15_000 }) };
+  if (cache?.key !== c.secretKey) cache = {
+      key: c.secretKey,
+      s: new Stripe(c.secretKey, {
+        maxNetworkRetries: 2,
+        timeout: 15_000,
+        // solo pruebas locales contra un Stripe simulado: STRIPE_API_HOST=localhost:12111 y STRIPE_API_HOST_TEST=1
+        ...(process.env.STRIPE_API_HOST && process.env.STRIPE_API_HOST_TEST === "1"
+          ? { host: process.env.STRIPE_API_HOST!.split(":")[0], port: Number(process.env.STRIPE_API_HOST!.split(":")[1] || 80), protocol: "http" as const }
+          : {}),
+      }),
+    };
   return { s: cache.s, webhookSecret: c.webhookSecret };
 }
 
