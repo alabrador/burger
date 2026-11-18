@@ -284,3 +284,78 @@ export function IngredientsIcon({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+/** Hamburguesa que se arma capa a capa mientras cargan los modelos 3D. */
+export function BurgerLoader({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 120 100"
+      className={`burger-loader ${className}`}
+      aria-hidden
+    >
+      <g className="bl-layer" style={{ animationDelay: "0.75s" }}>
+        <path d="M14 46c0-20 20-34 46-34s46 14 46 34z" fill="#c7772d" />
+        <path
+          d="M18 44c2-16 20-28 42-28s40 12 42 28"
+          fill="none"
+          stroke="#e39a4b"
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity=".7"
+        />
+        <g fill="#fbe9c8">
+          <ellipse
+            cx="44"
+            cy="24"
+            rx="2.6"
+            ry="1.4"
+            transform="rotate(-20 44 24)"
+          />
+          <ellipse cx="60" cy="19" rx="2.6" ry="1.4" />
+          <ellipse
+            cx="76"
+            cy="24"
+            rx="2.6"
+            ry="1.4"
+            transform="rotate(20 76 24)"
+          />
+          <ellipse
+            cx="52"
+            cy="32"
+            rx="2.6"
+            ry="1.4"
+            transform="rotate(-10 52 32)"
+          />
+          <ellipse
+            cx="68"
+            cy="32"
+            rx="2.6"
+            ry="1.4"
+            transform="rotate(10 68 32)"
+          />
+        </g>
+      </g>
+      <g className="bl-layer" style={{ animationDelay: "0.6s" }}>
+        <path
+          d="M12 50h96l-8 8-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5z"
+          fill="#ffc21a"
+        />
+      </g>
+      <g className="bl-layer" style={{ animationDelay: "0.45s" }}>
+        <rect x="12" y="56" width="96" height="11" rx="5.5" fill="#5a2f1b" />
+      </g>
+      <g className="bl-layer" style={{ animationDelay: "0.3s" }}>
+        <rect x="16" y="66" width="88" height="5" rx="2.5" fill="#d53a2a" />
+      </g>
+      <g className="bl-layer" style={{ animationDelay: "0.15s" }}>
+        <path
+          d="M10 73c6-4 10 4 16 0s10 4 16 0 10 4 16 0 10 4 16 0 10 4 16 0 10 4 18 0v4H10z"
+          fill="#79bd42"
+        />
+      </g>
+      <g className="bl-layer" style={{ animationDelay: "0s" }}>
+        <path d="M14 78h92c0 9-7 15-16 15H30c-9 0-16-6-16-15z" fill="#c7772d" />
+      </g>
+    </svg>
+  );
+}

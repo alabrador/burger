@@ -41,6 +41,7 @@ import {
 } from "@/lib/catalog";
 import { useBurger, type Section } from "@/lib/store";
 import {
+  BurgerLoader,
   CanArt,
   FriesArt,
   IngredientsIcon,
@@ -267,10 +268,27 @@ function Stage() {
           <Maximize className="size-4" />
         </Ctl>
       </div>
-      {active && (
-        <p className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1.5 text-xs text-muted">
-          Cargando modelos {Math.round(progress)} %
-        </p>
+      {(active || progress < 100) && (
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-0 grid place-items-center"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <BurgerLoader className="w-24 drop-shadow-[0_8px_18px_rgba(0,0,0,0.6)] lg:w-32" />
+            <p className="text-xs font-medium text-ink/80 lg:text-sm">
+              Preparando tu hamburguesa{" "}
+              <span className="tabular-nums text-gold">
+                {Math.round(progress)} %
+              </span>
+            </p>
+            <div className="h-1 w-32 overflow-hidden rounded-full bg-white/10 lg:w-40">
+              <div
+                className="h-full rounded-full bg-[linear-gradient(90deg,#e3261b,#ffc21a)] transition-[width] duration-300"
+                style={{ width: `${Math.round(progress)}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )}
       <OrderBar />
     </section>
