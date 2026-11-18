@@ -38,6 +38,16 @@ export const PROTEINS: Record<
   crispy: { label: "Pollo crispy", name: "Pollo crispy 250 g", note: "Empanizado y frito, extra crujiente", promo: "Empanizado casero · Extra crujiente", g: 280, kcal: 590, swatch: "#c27a26", surcharge: 1 },
 };
 
+export type DrinkId = "coca" | "sprite";
+export type DrinkVariant = "normal" | "zero";
+/** Bebidas del combo (lata 355 ml). Se pintan con una lata genérica, sin logos. */
+export const DRINKS: Record<DrinkId, { name: string; color: string }> = {
+  coca: { name: "Coca-Cola", color: "#d0161f" },
+  sprite: { name: "Sprite", color: "#1f9a4a" },
+};
+export const DRINK_PRICE = 2.5;
+export const FRIES = { name: "Papas fritas", note: "Porción mediana incluida" };
+
 export const DONENESS: Doneness[] = ["Medio", "Tres cuartos", "Bien cocido"];
 
 export const CATALOG: Category[] = [
