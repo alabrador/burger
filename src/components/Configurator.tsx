@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useProgress } from "@react-three/drei";
 import {
   Beef,
-  ShoppingBag,
   Check,
   CirclePlus,
   CupSoda,
@@ -37,7 +36,8 @@ import {
   type ProteinId,
 } from "@/lib/catalog";
 import { useLive, type LiveItem } from "@/lib/live";
-import { useBurger, type Section } from "@/lib/store";
+import { cartCount, cartTotal, loadCart, MAX_BURGERS, useBurger, type Section } from "@/lib/store";
+import Cart from "./Cart";
 import Checkout from "./Checkout";
 import {
   BurgerLoader,
@@ -112,15 +112,41 @@ function useTotals() {
   return { ...t, layers, unit, count, total: unit * count };
 }
 
+/** Añade la hamburguesa actual al carrito; el pago se hace desde el carrito. */
 function useAddToCart() {
-  const open = useBurger((s) => s.setCheckout);
-  return () => open(true);
+  const { unit } = useTotals();
+  return () => {
+    const s = useBurger.getState();
+    const live = useLive.getState();
+    if (cartCount(s.cart) + s.count > MAX_BURGERS)
+      return showToast(`Máximo ${MAX_BURGERS} hamburguesas por pedido.`);
+    const parts = Object.entries(s.qty)
+      .sort((a, b) => Object.keys(live.items).indexOf(a[0]) - Object.keys(live.items).indexOf(b[0]))
+      .map(([id, n]) => {
+        const name = id === "patty_x" ? (n === 1 ? "Doble carne" : "Triple carne") : (live.items[id]?.name ?? id);
+        return n > 1 && id !== "patty_x" ? `${n}× ${name}` : name;
+      });
+    const drink = s.drink ? `${DRINKS[s.drink].name}${s.drinkVariant === "zero" ? " Zero" : ""}` : "";
+    s.addLine({
+      protein: s.protein,
+      qty: { ...s.qty },
+      drink: s.drink,
+      drinkVariant: s.drinkVariant,
+      doneness: s.doneness,
+      quantity: s.count,
+      unit,
+      title: `Burger ${live.proteins[s.protein]?.name ?? PROTEINS[s.protein].label}`,
+      desc: [parts.join(", ") || "Sin ingredientes extra", ["Papas fritas", drink].filter(Boolean).join(" · ")].join(" · "),
+    });
+    showToast(`${s.count > 1 ? `${s.count} hamburguesas añadidas` : "Hamburguesa añadida"} al carrito. Abre el carrito para pagar.`);
+  };
 }
 
 export default function Configurator() {
   const load = useLive((s) => s.load);
   useEffect(() => {
     load();
+    useBurger.setState({ cart: loadCart() });
   }, [load]);
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -131,6 +157,7 @@ export default function Configurator() {
       </main>
       <BottomNav />
       <Toast />
+      <Cart />
       <Checkout />
     </div>
   );
@@ -138,7 +165,9 @@ export default function Configurator() {
 
 /* ---------- cabecera ---------- */
 function Header() {
-  const cart = useBurger((s) => s.cart);
+  const lines = useBurger((s) => s.cart);
+  const openCart = useBurger((s) => s.setCartOpen);
+  const cart = { count: cartCount(lines), total: cartTotal(lines) };
   return (
     <header className="relative z-40 shrink-0 bg-[linear-gradient(180deg,#1f1613_0%,#140e0c_100%)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:h-16 lg:px-4 2xl:px-6">
@@ -176,7 +205,7 @@ function Header() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => soon("Carrito")}
+            onClick={() => openCart(true)}
             className="relative flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] pl-2.5 pr-2.5 transition-colors hover:border-gold/50 lg:pr-3.5"
             aria-label={`Carrito: ${cart.count} hamburguesas, ${money(cart.total)}`}
           >
@@ -335,11 +364,11 @@ function OrderBar() {
       <button
         type="button"
         onClick={add}
-        aria-label={`Hacer pedido, ${money(total)}`}
+        aria-label={`Agregar al carrito, ${money(total)}`}
         className="cta-gold pointer-events-auto flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full font-display lg:h-9 lg:w-auto lg:rounded-lg lg:px-3 lg:text-[0.8125rem] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        <ShoppingBag className="size-4" strokeWidth={2.4} />
-        <span className="max-lg:hidden">Hacer pedido</span>
+        <ShoppingCart className="size-4" strokeWidth={2.4} />
+        <span className="max-lg:hidden">Agregar al carrito</span>
       </button>
       <div className="ml-auto min-w-0 text-right">
         <p className="truncate text-[0.625rem] text-ink/80 lg:text-xs">

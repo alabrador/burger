@@ -57,12 +57,9 @@ export default function Checkout() {
 }
 
 function Dialog({ onClose }: { onClose: () => void }) {
-  const qty = useBurger((s) => s.qty);
-  const protein = useBurger((s) => s.protein);
-  const drink = useBurger((s) => s.drink);
-  const variant = useBurger((s) => s.drinkVariant);
-  const count = useBurger((s) => s.count);
-  const line = useMemo(() => ({ protein, items: qty, drink: drink ? (variant === "zero" ? `${drink}_zero` : drink) : null, quantity: count }), [qty, protein, drink, variant, count]);
+  const cart = useBurger((s) => s.cart);
+  const clearCart = useBurger((s) => s.clearCart);
+  const lines = useMemo(() => cart.map((l) => ({ protein: l.protein, items: l.qty, drink: l.drink ? (l.drinkVariant === "zero" ? `${l.drink}_zero` : l.drink) : null, quantity: l.quantity })), [cart]);
 
   const [store, setStore] = useState<Store | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -81,7 +78,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     fetch("/api/store")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((s: Store) => {
         setStore(s);
         setMethod((m) => m || s.payments[0] || "");
@@ -94,7 +91,8 @@ function Dialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   useEffect(() => {
-    post<Quote>("/api/orders/quote", { lines: [line], coupon: applied || undefined })
+    if (!lines.length) return onClose();
+    post<Quote>("/api/orders/quote", { lines, coupon: applied || undefined })
       .then((q) => (setQuote(q), setErr("")))
       .catch((e) => {
         if (applied) {
@@ -102,7 +100,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
           setErr(e.message);
         } else setErr(e.message);
       });
-  }, [line, applied]);
+  }, [lines, applied, onClose]);
 
   const slots = useMemo(() => (store ? pickupSlots(store.store, store.ordering.prepMinutes, store.ordering.slotMinutes, 40) : []), [store]);
   // si está cerrado, "lo antes posible" no vale: usamos la primera hora disponible
@@ -123,7 +121,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
       const r = await post<{ code: string; token: string; payment: Payment }>(
         "/api/orders",
         {
-          lines: [line],
+          lines,
           customer: { name: cust.name, email: cust.email, phone: cust.phone || "", marketing },
           pickup: pick,
           paymentMethod: method,
@@ -133,6 +131,7 @@ function Dialog({ onClose }: { onClose: () => void }) {
         },
         { "Idempotency-Key": idem.current! },
       );
+      clearCart();
       const p = r.payment;
       if (p.type === "redirect") location.href = p.url;
       else if (p.type === "form") {

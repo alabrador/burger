@@ -14,7 +14,14 @@ type State = {
   turn: number;
   activePreset: string | null;
   section: Section | null;
-  cart: { count: number; total: number };
+  /** líneas del carrito (se guardan en el navegador) */
+  cart: CartLine[];
+  cartOpen: boolean;
+  setCartOpen: (v: boolean) => void;
+  addLine: (l: Omit<CartLine, "key">) => void;
+  setLineQty: (key: string, n: number) => void;
+  removeLine: (key: string) => void;
+  clearCart: () => void;
   /** cuántas hamburguesas iguales se agregan */
   count: number;
   drink: DrinkId | null;
@@ -31,10 +38,40 @@ type State = {
   setSpinning: (v: boolean) => void;
   turn360: () => void;
   setSection: (s: Section | null) => void;
-  addToCart: (unitPrice: number) => void;
   checkout: boolean;
   setCheckout: (v: boolean) => void;
 };
+
+export type CartLine = {
+  key: string;
+  protein: ProteinId;
+  qty: Qty;
+  drink: DrinkId | null;
+  drinkVariant: DrinkVariant;
+  doneness: Doneness;
+  quantity: number;
+  /** precio unitario mostrado (el servidor lo recalcula al pagar) */
+  unit: number;
+  title: string;
+  desc: string;
+};
+export const MAX_BURGERS = 10;
+const CART_KEY = "cb:carrito";
+export const cartCount = (c: CartLine[]) => c.reduce((n, l) => n + l.quantity, 0);
+export const cartTotal = (c: CartLine[]) => c.reduce((n, l) => n + l.unit * l.quantity, 0);
+function saveCart(c: CartLine[]) {
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(c));
+  } catch {}
+}
+export function loadCart(): CartLine[] {
+  try {
+    const c = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    return Array.isArray(c) ? c.filter((l) => l && typeof l.key === "string" && l.quantity > 0).slice(0, 20) : [];
+  } catch {
+    return [];
+  }
+}
 
 const clean = (q: Qty) => Object.fromEntries(Object.entries(q).filter(([, n]) => n > 0));
 
@@ -47,7 +84,34 @@ export const useBurger = create<State>((set) => ({
   turn: 0,
   activePreset: PRESETS[0].name,
   section: "base",
-  cart: { count: 0, total: 0 },
+  cart: [],
+  cartOpen: false,
+  setCartOpen: (cartOpen) => set({ cartOpen }),
+  addLine: (l) =>
+    set((s) => {
+      const same = s.cart.find((x) => x.title === l.title && x.desc === l.desc && x.doneness === l.doneness);
+      const cart = same
+        ? s.cart.map((x) => (x === same ? { ...x, quantity: Math.min(MAX_BURGERS, x.quantity + l.quantity), unit: l.unit } : x))
+        : [...s.cart, { ...l, key: crypto.randomUUID() }];
+      saveCart(cart);
+      return { cart, count: 1 };
+    }),
+  setLineQty: (key, n) =>
+    set((s) => {
+      const cart = s.cart.map((x) => (x.key === key ? { ...x, quantity: Math.max(1, Math.min(MAX_BURGERS, n)) } : x));
+      saveCart(cart);
+      return { cart };
+    }),
+  removeLine: (key) =>
+    set((s) => {
+      const cart = s.cart.filter((x) => x.key !== key);
+      saveCart(cart);
+      return { cart };
+    }),
+  clearCart: () => {
+    saveCart([]);
+    set({ cart: [] });
+  },
   count: 1,
   drink: "coca",
   drinkVariant: "normal",
@@ -76,5 +140,4 @@ export const useBurger = create<State>((set) => ({
   setSection: (section) => set({ section }),
   checkout: false,
   setCheckout: (checkout) => set({ checkout }),
-  addToCart: (unit) => set((s) => ({ cart: { count: s.cart.count + s.count, total: s.cart.total + unit * s.count }, count: 1 })),
 }));
