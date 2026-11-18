@@ -1,14 +1,27 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/drei";
+import {
+  ContactShadows,
+  Environment,
+  Lightformer,
+  useGLTF,
+} from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
-import { CONTACT, DRACO, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
+import {
+  CONTACT,
+  DRACO,
+  MODELS,
+  PROCEDURAL_HEIGHT,
+  SCALE_Y,
+  TRAY,
+} from "@/lib/models";
 import { cloudOf, settle, type Cloud } from "@/lib/settle";
 import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
+import Steam from "./Steam";
 
 const MODEL_KEYS = Object.keys(MODELS);
 const MODEL_URLS = MODEL_KEYS.map((k) => MODELS[k]);
@@ -43,7 +56,12 @@ function stackHeight(scene: THREE.Object3D) {
   return h || 0.02;
 }
 
-type LayerProps = { layerKey: string; index: number; target: number; children: React.ReactNode };
+type LayerProps = {
+  layerKey: string;
+  index: number;
+  target: number;
+  children: React.ReactNode;
+};
 
 /** Cada capa cae desde arriba y se asienta con un muelle amortiguado. */
 function Layer({ layerKey, index, target, children }: LayerProps) {
@@ -72,11 +90,18 @@ function Burger({ shift }: { shift: number }) {
   const spin360 = useRef({ seen: turn, left: 0 });
   const gltfs = useGLTF(MODEL_URLS, DRACO);
   const assets = useMemo(() => {
-    const out: Record<string, { scene: THREE.Object3D; h: number; cloud: Cloud }> = {};
+    const out: Record<
+      string,
+      { scene: THREE.Object3D; h: number; cloud: Cloud }
+    > = {};
     MODEL_KEYS.forEach((k, i) => {
       const scene = gltfs[i].scene;
       prepare(scene);
-      out[k] = { scene, h: stackHeight(scene) * (SCALE_Y[k] ?? 1), cloud: cloudOf(scene, SCALE_Y[k] ?? 1) };
+      out[k] = {
+        scene,
+        h: stackHeight(scene) * (SCALE_Y[k] ?? 1),
+        cloud: cloudOf(scene, SCALE_Y[k] ?? 1),
+      };
     });
     return out;
   }, [gltfs]);
@@ -92,10 +117,17 @@ function Burger({ shift }: { shift: number }) {
         contact: CONTACT[bases[i]],
       })),
     );
-    return keys.map((key, i) => ({ key, base: bases[i], y: ys[i] + (exploded ? i * EXPLODE_GAP : 0), i }));
+    return keys.map((key, i) => ({
+      key,
+      base: bases[i],
+      y: ys[i] + (exploded ? i * EXPLODE_GAP : 0),
+      i,
+    }));
   }, [qty, protein, models, exploded, assets]);
 
-  const top = layers.length ? layers[layers.length - 1].y + assets.bun_top.h : 0.08;
+  const top = layers.length
+    ? layers[layers.length - 1].y + assets.bun_top.h
+    : 0.08;
   const group = useRef<THREE.Group>(null);
   const drag = useRef({ active: false, x: 0, v: 0 });
   const camState = useRef({ y: 0.05, d: 0.5 });
@@ -161,16 +193,24 @@ function Burger({ shift }: { shift: number }) {
   });
 
   return (
-    <group ref={group} rotation-y={-0.5}>
-      <group position-y={TRAY_TOP}>
-        {layers.map((l) => (
-          <Layer key={l.key} layerKey={l.key} index={l.i} target={l.y}>
-            {assets[l.base] && <primitive object={assets[l.base].scene.clone(true)} scale-y={SCALE_Y[l.base] ?? 1} />}
-          </Layer>
-        ))}
+    <>
+      <Steam y={TRAY_TOP + top - 0.012} />
+      <group ref={group} rotation-y={-0.5}>
+        <group position-y={TRAY_TOP}>
+          {layers.map((l) => (
+            <Layer key={l.key} layerKey={l.key} index={l.i} target={l.y}>
+              {assets[l.base] && (
+                <primitive
+                  object={assets[l.base].scene.clone(true)}
+                  scale-y={SCALE_Y[l.base] ?? 1}
+                />
+              )}
+            </Layer>
+          ))}
+        </group>
+        <Tray />
       </group>
-      <Tray />
-    </group>
+    </>
   );
 }
 
@@ -198,13 +238,41 @@ function Lights() {
         shadow-camera-near={0.01}
         shadow-camera-far={0.6}
       />
-      <directionalLight position={[-0.12, 0.09, -0.14]} intensity={0.7} color="#cfe0ff" />
+      <directionalLight
+        position={[-0.12, 0.09, -0.14]}
+        intensity={0.7}
+        color="#cfe0ff"
+      />
       {/* Estudio de luces suave para los reflejos (sin descargar HDRI). */}
       <Environment resolution={256}>
-        <Lightformer form="rect" intensity={2.2} color="#fff3e2" position={[0, 3, 2]} scale={[6, 3, 1]} />
-        <Lightformer form="rect" intensity={1.2} color="#ffe2bd" position={[-4, 1, -1]} scale={[3, 4, 1]} />
-        <Lightformer form="rect" intensity={0.8} color="#dfe8ff" position={[4, 1, -2]} scale={[3, 4, 1]} />
-        <Lightformer form="ring" intensity={0.6} color="#ffffff" position={[0, 5, 0]} scale={2} />
+        <Lightformer
+          form="rect"
+          intensity={2.2}
+          color="#fff3e2"
+          position={[0, 3, 2]}
+          scale={[6, 3, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={1.2}
+          color="#ffe2bd"
+          position={[-4, 1, -1]}
+          scale={[3, 4, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={0.8}
+          color="#dfe8ff"
+          position={[4, 1, -2]}
+          scale={[3, 4, 1]}
+        />
+        <Lightformer
+          form="ring"
+          intensity={0.6}
+          color="#ffffff"
+          position={[0, 5, 0]}
+          scale={2}
+        />
       </Environment>
     </>
   );
@@ -220,15 +288,31 @@ export default function BurgerScene({ shift = 0 }: { shift?: number }) {
       shadows
       dpr={[1, 2]}
       camera={{ fov: 30, near: 0.005, far: 3, position: [0, 0.2, 0.5] }}
-      gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.95 }}
-      style={{ touchAction: "pan-y", cursor: "grab", position: "absolute", inset: 0 }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 0.95,
+      }}
+      style={{
+        touchAction: "pan-y",
+        cursor: "grab",
+        position: "absolute",
+        inset: 0,
+      }}
       aria-label="Vista 3D de la hamburguesa. Arrastra para girarla."
     >
       <Lights />
       <Suspense fallback={<Loader />}>
         <Burger shift={shift} />
       </Suspense>
-      <ContactShadows position={[0, -0.0005, 0]} opacity={0.5} scale={0.5} blur={2.4} far={0.2} />
+      <ContactShadows
+        position={[0, -0.0005, 0]}
+        opacity={0.5}
+        scale={0.5}
+        blur={2.4}
+        far={0.2}
+      />
     </Canvas>
   );
 }
