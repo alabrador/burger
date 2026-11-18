@@ -139,7 +139,7 @@ function Burger({ shift }: { shift: number }) {
       }
     }
     // La cámara se aleja y sube según la altura de la pila.
-    const narrow = size.width / size.height < 0.9 ? 1.3 : 1;
+    const narrow = Math.max(1, 0.95 / (size.width / size.height));
     const tD = Math.max(0.46, top * 2.4 + 0.18) * narrow;
     const tY = TRAY_TOP + top * 0.48;
     const c = camState.current;

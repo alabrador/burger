@@ -254,3 +254,33 @@ export function SauceBottle({
     </svg>
   );
 }
+
+/** Icono "elige tus ingredientes": capas de hamburguesa separadas con un "+" para añadir. */
+export function IngredientsIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 9.5C3 6 6.2 3.5 10.5 3.5S18 6 18 9.5z" />
+      <path d="M2.5 13c1.4 1 2.8 1 4.2 0 1.4 1 2.8 1 4.2 0 1.4 1 2.8 1 4.2 0 1.2.9 2.3 1 3.4.4" />
+      <rect x="3" y="15.5" width="15" height="2.6" rx="1.3" />
+      <path d="M3.5 20.5h14" />
+      <circle
+        cx="19"
+        cy="5"
+        r="3.6"
+        fill="currentColor"
+        stroke="none"
+        opacity="0.18"
+      />
+      <path d="M19 3.3v3.4M17.3 5h3.4" strokeWidth="1.9" />
+    </svg>
+  );
+}

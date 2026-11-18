@@ -24,7 +24,7 @@ import {
   Cheese,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BUN,
   DRINKS,
@@ -40,18 +40,30 @@ import {
   type ProteinId,
 } from "@/lib/catalog";
 import { useBurger, type Section } from "@/lib/store";
-import { CanArt, FriesArt, Logo, NeonBurger, SauceBottle } from "./Brand";
+import {
+  CanArt,
+  FriesArt,
+  IngredientsIcon,
+  Logo,
+  NeonBurger,
+  SauceBottle,
+} from "./Brand";
 
 const BurgerScene = dynamic(() => import("./BurgerScene"), { ssr: false });
 
-const SECTIONS: { id: Section; label: string; icon: LucideIcon }[] = [
+const SECTIONS: {
+  id: Section;
+  label: string;
+  short?: string;
+  icon: LucideIcon;
+}[] = [
   { id: "base", label: "Base", icon: Hamburger },
   { id: "carne", label: "Carne", icon: Beef },
   { id: "quesos", label: "Quesos", icon: Cheese },
   { id: "vegetales", label: "Vegetales", icon: Leaf },
   { id: "salsas", label: "Salsas", icon: Soup },
   { id: "extras", label: "Extras", icon: CirclePlus },
-  { id: "bebida", label: "Bebida del combo", icon: CupSoda },
+  { id: "bebida", label: "Bebida del combo", short: "Bebida", icon: CupSoda },
 ];
 
 const NAV: { label: string; short: string; icon: LucideIcon }[] = [
@@ -115,7 +127,7 @@ export default function Configurator() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <Header />
-      <main className="mx-auto grid min-h-0 w-full max-w-[1500px] flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,50fr)_minmax(0,50fr)] gap-2 px-2 py-2 lg:grid-cols-[minmax(0,1fr)_minmax(330px,370px)] lg:grid-rows-1 lg:gap-3 lg:px-3 lg:py-3">
+      <main className="grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,50fr)_minmax(0,50fr)] gap-2 px-2 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:grid-rows-1 lg:grid-cols-[minmax(0,1fr)_clamp(340px,27vw,640px)] lg:gap-3 lg:px-4 lg:py-3 2xl:gap-4 2xl:px-6 2xl:py-4">
         <Stage />
         <IngredientPanel />
       </main>
@@ -129,48 +141,53 @@ export default function Configurator() {
 function Header() {
   const cart = useBurger((s) => s.cart);
   return (
-    <header className="relative z-40 shrink-0 border-b-2 border-red/80 bg-bg">
-      <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between gap-4 px-2.5 lg:h-16 lg:px-3">
+    <header className="relative z-40 shrink-0 bg-[linear-gradient(180deg,#1f1613_0%,#140e0c_100%)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]">
+      <div className="flex h-14 w-full items-center gap-3 px-3 lg:h-16 lg:px-4 2xl:px-6">
         <button
           type="button"
-          className="grid size-10 place-items-center lg:hidden"
+          className="grid size-10 place-items-center rounded-xl hover:bg-white/5 md:hidden"
           aria-label="Abrir menú"
           onClick={() => soon("Menú")}
         >
           <Menu className="size-6" />
         </button>
-        <Logo compact />
+        <div className="max-md:mx-auto">
+          <Logo compact />
+        </div>
         <nav
           aria-label="Principal"
-          className="hidden h-full items-stretch gap-6 lg:flex"
+          className="hidden flex-1 justify-center md:flex"
         >
-          {NAV.map((n, i) => (
-            <button
-              key={n.label}
-              type="button"
-              aria-current={i === 0 ? "page" : undefined}
-              onClick={() => (i === 0 ? undefined : soon(n.label))}
-              className="relative flex items-center gap-2 text-sm font-medium text-ink/90 hover:text-gold aria-[current=page]:text-ink"
-            >
-              <n.icon className={`size-4 ${i === 0 ? "text-gold" : ""}`} />
-              {n.label}
-              {i === 0 && (
-                <span className="absolute inset-x-0 bottom-0 h-1 rounded-full bg-gold" />
-              )}
-            </button>
-          ))}
+          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            {NAV.map((n, i) => (
+              <button
+                key={n.label}
+                type="button"
+                aria-current={i === 0 ? "page" : undefined}
+                onClick={() => (i === 0 ? undefined : soon(n.label))}
+                className="flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium text-ink/75 transition-colors hover:bg-white/5 hover:text-ink aria-[current=page]:bg-gold/12 aria-[current=page]:text-gold aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(255,194,26,0.45),0_0_18px_-6px_rgba(255,194,26,0.6)] xl:px-4"
+              >
+                <n.icon className="size-4" />
+                <span className="max-lg:hidden">{n.label}</span>
+                <span className="lg:hidden">{n.short}</span>
+              </button>
+            ))}
+          </div>
         </nav>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => soon("Carrito")}
-            className="relative flex h-9 items-center gap-2 rounded-full border border-line px-3"
+            className="relative flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] pl-2.5 pr-2.5 transition-colors hover:border-gold/50 lg:pr-3.5"
             aria-label={`Carrito: ${cart.count} hamburguesas, ${money(cart.total)}`}
           >
-            <ShoppingCart className="size-5" />
-            <span className="absolute -top-1.5 left-5 grid min-w-5 place-items-center rounded-full bg-red px-1 text-[11px] font-bold">
-              {cart.count}
+            <span className="relative">
+              <ShoppingCart className="size-5" />
+              <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[0.625rem] font-bold text-[#1b1208] ring-2 ring-[#1a1210]">
+                {cart.count}
+              </span>
             </span>
+            <span className="hidden h-5 w-px bg-white/15 lg:block" />
             <span className="hidden font-display text-sm font-bold tabular-nums lg:inline">
               {money(cart.total)}
             </span>
@@ -179,12 +196,13 @@ function Header() {
             type="button"
             aria-label="Mi cuenta"
             onClick={() => soon("Mi cuenta")}
-            className="grid size-9 place-items-center rounded-full bg-panel-2"
+            className="grid size-10 place-items-center rounded-full bg-[linear-gradient(160deg,#3a2b25,#1f1714)] ring-1 ring-gold/40 transition hover:ring-gold"
           >
             <User className="size-5" />
           </button>
         </div>
       </div>
+      <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(227,38,27,0.9)_15%,#ffc21a_50%,rgba(227,38,27,0.9)_85%,transparent)]" />
     </header>
   );
 }
@@ -209,23 +227,23 @@ function Stage() {
       <NeonBurger className="pointer-events-none absolute right-[3%] top-[3%] w-28 opacity-90 max-lg:hidden" />
       <BurgerScene />
       <div className="pointer-events-none absolute left-3 top-2.5 max-w-[70%] lg:left-5 lg:top-4">
-        <h1 className="whitespace-nowrap font-display text-lg font-extrabold leading-none lg:text-[26px]">
+        <h1 className="whitespace-nowrap font-display text-lg font-extrabold leading-none lg:text-[1.625rem]">
           Tu Hamburguesa
         </h1>
-        <p className="-rotate-3 font-script text-2xl leading-tight text-gold lg:text-[36px]">
+        <p className="-rotate-3 font-script text-2xl leading-tight text-gold lg:text-[2.25rem]">
           Personalizada
         </p>
-        <p className="mt-0.5 hidden text-[13px] text-ink/80 sm:block">
+        <p className="mt-0.5 hidden text-[0.8125rem] text-ink/80 sm:block">
           Crea tu combinación perfecta con ingredientes premium.
         </p>
-        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-black/40 py-0.5 pl-1 pr-2.5 text-[11px] font-semibold text-gold backdrop-blur-sm lg:text-xs">
+        <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-black/40 py-0.5 pl-1 pr-2.5 text-[0.6875rem] font-semibold text-gold backdrop-blur-sm lg:text-xs">
           <FriesArt className="size-5" />
           Incluye papas fritas
         </p>
       </div>
       <div className="absolute right-2.5 top-2.5 flex flex-col gap-1.5 lg:right-4 lg:top-1/2 lg:-translate-y-1/2 lg:gap-2">
         <Ctl onClick={turn360} label="Dar una vuelta de 360 grados">
-          <span className="font-display text-[11px] font-bold">360°</span>
+          <span className="font-display text-[0.6875rem] font-bold">360°</span>
         </Ctl>
         <Ctl
           pressed={exploded}
@@ -302,13 +320,13 @@ function OrderBar() {
         type="button"
         onClick={add}
         aria-label={`Hacer pedido, ${money(total)}`}
-        className="cta-gold pointer-events-auto flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full font-display lg:h-9 lg:w-auto lg:rounded-lg lg:px-3 lg:text-[13px] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="cta-gold pointer-events-auto flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full font-display lg:h-9 lg:w-auto lg:rounded-lg lg:px-3 lg:text-[0.8125rem] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         <ShoppingBag className="size-4" strokeWidth={2.4} />
         <span className="max-lg:hidden">Hacer pedido</span>
       </button>
       <div className="ml-auto min-w-0 text-right">
-        <p className="truncate text-[10px] text-ink/80 lg:text-xs">
+        <p className="truncate text-[0.625rem] text-ink/80 lg:text-xs">
           {count > 1
             ? `${count} × ${money(unit)}`
             : drink
@@ -316,7 +334,7 @@ function OrderBar() {
               : "Con papas fritas"}
         </p>
         <p
-          className="font-display text-xl font-black leading-none text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] lg:text-[28px]"
+          className="font-display text-xl font-black leading-none text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] lg:text-[1.75rem]"
           aria-live="polite"
         >
           {money(total)}
@@ -354,28 +372,124 @@ function Ctl({
 }
 
 /* ---------- panel de ingredientes ---------- */
+const PANEL_SECTIONS: Section[] = [
+  "carne",
+  "quesos",
+  "vegetales",
+  "salsas",
+  "extras",
+  "bebida",
+];
+
 function IngredientPanel() {
+  const scroller = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState<Section>("carne");
+
+  // Resalta la categoría visible y mueve la barra de progreso al hacer scroll.
+  useEffect(() => {
+    const root = scroller.current;
+    if (!root) return;
+    const onScroll = () => {
+      const max = root.scrollHeight - root.clientHeight;
+      if (bar.current)
+        bar.current.style.transform = `scaleX(${max > 0 ? root.scrollTop / max : 1})`;
+      const top = root.getBoundingClientRect().top;
+      let cur: Section = PANEL_SECTIONS[0];
+      for (const id of PANEL_SECTIONS) {
+        const el = document.getElementById(`grp-${id}`);
+        if (el && el.getBoundingClientRect().top - top < 56) cur = id;
+      }
+      if (root.scrollTop < 4) cur = PANEL_SECTIONS[0];
+      if (max > 0 && root.scrollTop >= max - 2)
+        cur = PANEL_SECTIONS[PANEL_SECTIONS.length - 1];
+      setActive(cur);
+    };
+    onScroll();
+    root.addEventListener("scroll", onScroll, { passive: true });
+    const ro = new ResizeObserver(onScroll);
+    if (root.firstElementChild) ro.observe(root.firstElementChild);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      ro.disconnect();
+    };
+  }, []);
+
+  // Mantiene visible en la barra la categoría activa.
+  useEffect(() => {
+    const chip = document.querySelector<HTMLElement>(`[data-chip="${active}"]`);
+    const nav = chip?.parentElement;
+    if (!chip || !nav) return;
+    const left = chip.offsetLeft - nav.offsetLeft;
+    if (
+      left < nav.scrollLeft ||
+      left + chip.offsetWidth > nav.scrollLeft + nav.clientWidth
+    )
+      nav.scrollTo({ left: left - 8, behavior: "smooth" });
+  }, [active]);
+
+  const jump = useCallback((id: Section) => {
+    const root = scroller.current;
+    const el = document.getElementById(`grp-${id}`);
+    if (!root || !el) return;
+    root.scrollTo({ top: el.offsetTop - root.offsetTop, behavior: "smooth" });
+  }, []);
+
   return (
     <section
       aria-label="Elige tus ingredientes"
-      className="card flex min-h-0 flex-1 flex-col rounded-2xl"
+      className="card @container flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl"
     >
-      <div className="shrink-0 px-3 pb-2 pt-2.5 lg:px-4 lg:pt-3.5">
-        <h2 className="flex items-center gap-2 font-display text-base font-extrabold lg:text-lg">
-          <Layers className="size-5 text-gold" />
-          Elige tus ingredientes
-        </h2>
-        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-black/25 px-2 py-1 text-[11px] text-muted">
-          <Check
-            className="size-3.5 shrink-0 rounded-full bg-ok p-0.5 text-white"
-            strokeWidth={3}
-          />
-          Siempre incluye{" "}
-          <b className="font-semibold text-ink">{BUN.name.toLowerCase()}</b> y{" "}
-          <b className="font-semibold text-ink">papas fritas</b>
-        </p>
+      <div className="shrink-0 px-3 pt-2.5 lg:px-4 lg:pt-3.5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid size-8 place-items-center rounded-xl bg-gold/12 text-gold ring-1 ring-gold/30">
+            <IngredientsIcon className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-display text-base font-extrabold leading-tight lg:text-lg">
+              Elige tus ingredientes
+            </h2>
+            <p className="truncate text-[0.6875rem] text-muted">
+              Siempre incluye{" "}
+              <b className="font-semibold text-ink">{BUN.name.toLowerCase()}</b>{" "}
+              y <b className="font-semibold text-ink">papas fritas</b>
+            </p>
+          </div>
+        </div>
+        <nav
+          aria-label="Ir a categoría"
+          className="no-scrollbar -mx-1 mt-2.5 flex gap-1 overflow-x-auto px-1 pb-2"
+        >
+          {PANEL_SECTIONS.map((id) => {
+            const S = SECTIONS.find((x) => x.id === id)!;
+            return (
+              <button
+                key={id}
+                type="button"
+                data-chip={id}
+                aria-current={active === id ? "true" : undefined}
+                onClick={() => jump(id)}
+                className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-2.5 text-[0.6875rem] font-semibold text-muted transition-colors hover:text-ink aria-[current=true]:border-gold/50 aria-[current=true]:bg-gold/12 aria-[current=true]:text-gold"
+              >
+                <S.icon className="size-3.5" />
+                {S.short ?? S.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 lg:px-4">
+      <div className="relative h-0.5 shrink-0 bg-white/5">
+        <div
+          ref={bar}
+          className="absolute inset-0 origin-left scale-x-0 bg-[linear-gradient(90deg,#e3261b,#ffc21a)] transition-transform duration-150"
+        />
+      </div>
+      <div
+        ref={scroller}
+        className="pro-scroll relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-6 lg:px-4"
+      >
         <CarneGroup />
         {CATALOG.filter((c) => c.id !== "carne").map((c) => (
           <Group key={c.id} id={c.id} count={c.items.length}>
@@ -407,11 +521,8 @@ function Group({
     CATALOG.find((c) => c.id === id)?.items.filter((i) => qty[i.id]).length ??
     0;
   return (
-    <section
-      aria-label={S.label}
-      className="border-t border-line pb-2.5 pt-2 first:border-t-0 first:pt-0"
-    >
-      <h3 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+    <section id={`grp-${id}`} aria-label={S.label} className="pb-3">
+      <h3 className="sticky top-0 z-10 -mx-3 mb-1.5 flex items-center gap-1.5 border-b border-line/70 bg-[#1d1513]/95 px-3 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-muted backdrop-blur-md lg:-mx-4 lg:px-4">
         <S.icon className="size-3.5 text-gold" />
         {S.label}
         {count ? (
@@ -420,7 +531,9 @@ function Group({
           </span>
         ) : null}
       </h3>
-      <div className="grid grid-cols-4 gap-1.5">{children}</div>
+      <div className="grid grid-cols-4 gap-1.5 @[30rem]:grid-cols-5 @[38rem]:grid-cols-6 2xl:gap-2">
+        {children}
+      </div>
       {extra}
     </section>
   );
@@ -442,11 +555,11 @@ function Tick() {
 function TileText({ name, sub }: { name: string; sub?: string }) {
   return (
     <>
-      <span className="mt-0.5 line-clamp-2 text-[11px] font-semibold leading-tight">
+      <span className="mt-0.5 line-clamp-2 text-[0.6875rem] font-semibold leading-tight">
         {name}
       </span>
       {sub && (
-        <span className="mt-auto text-[10px] leading-tight text-muted">
+        <span className="mt-auto text-[0.625rem] leading-tight text-muted">
           {sub}
         </span>
       )}
@@ -494,7 +607,7 @@ function ItemTile({ item }: { item: Item }) {
           >
             −
           </button>
-          <output className="w-3 text-center text-[11px] font-bold tabular-nums">
+          <output className="w-3 text-center text-[0.6875rem] font-bold tabular-nums">
             {n}
           </output>
           <button
@@ -534,7 +647,7 @@ function Chips<T extends string>({
           type="button"
           aria-pressed={value === o}
           onClick={() => onChange(o)}
-          className="flex-1 whitespace-nowrap rounded-full border border-line px-1.5 py-1 text-[11px] aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]"
+          className="flex-1 whitespace-nowrap rounded-full border border-line px-1.5 py-1 text-[0.6875rem] aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]"
         >
           {names ? names[o] : o}
         </button>
@@ -645,7 +758,7 @@ function Thumb({ src, size = 44 }: { src: string; size?: number }) {
       width={size}
       height={size}
       className="mx-auto object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
-      style={{ width: size, height: size }}
+      style={{ width: `${size / 16}rem`, height: `${size / 16}rem` }}
     />
   );
 }
@@ -669,7 +782,7 @@ function BottomNav() {
           type="button"
           aria-current={i === 0 ? "page" : undefined}
           onClick={() => (i === 0 ? undefined : soon(n.label))}
-          className="relative flex flex-col items-center justify-center gap-0.5 text-[11px] text-ink/85 aria-[current=page]:text-gold"
+          className="relative flex flex-col items-center justify-center gap-0.5 text-[0.6875rem] text-ink/85 aria-[current=page]:text-gold"
         >
           <n.icon className="size-5" />
           {n.short}
