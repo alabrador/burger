@@ -12,7 +12,7 @@ type S = {
   smtp: { host: string; port: number; secure: boolean; user: string; fromName: string; fromEmail: string; replyTo: string; hasPass: boolean; fromEnv: boolean };
   payments: {
     cash: { enabled: boolean };
-    stripe: { enabled: boolean; hasSecretKey: boolean; hasWebhookSecret: boolean; fromEnv: boolean; ready: boolean; webhookUrl: string };
+    stripe: { enabled: boolean; publishableKey?: string; hasSecretKey: boolean; hasWebhookSecret: boolean; fromEnv: boolean; ready: boolean; webhookUrl: string };
     paypal: { enabled: boolean; env: "sandbox" | "live"; clientId: string; hasClientSecret: boolean; webhookId: string; fromEnv: boolean; ready: boolean; webhookUrl: string };
     bizum: { enabled: boolean; env: "test" | "live"; merchantCode: string; terminal: string; hasSecretKey: boolean; fromEnv: boolean; ready: boolean; notifyUrl: string };
   };
@@ -291,7 +291,7 @@ function Payments({ s, onSaved }: { s: S; onSaved: () => void }) {
   const p = s.payments;
   const [f, setF] = useState({
     cash: { enabled: p.cash.enabled },
-    stripe: { enabled: p.stripe.enabled, secretKey: "", webhookSecret: "" },
+    stripe: { enabled: p.stripe.enabled, publishableKey: p.stripe.publishableKey ?? "", secretKey: "", webhookSecret: "" },
     paypal: { enabled: p.paypal.enabled, env: p.paypal.env, clientId: p.paypal.clientId, clientSecret: "", webhookId: p.paypal.webhookId },
     bizum: { enabled: p.bizum.enabled, env: p.bizum.env, merchantCode: p.bizum.merchantCode, terminal: p.bizum.terminal, secretKey: "" },
   });
@@ -318,7 +318,10 @@ function Payments({ s, onSaved }: { s: S; onSaved: () => void }) {
       </Card>
       <Card title="Tarjeta (Stripe)" actions={state(p.stripe.ready, p.stripe.fromEnv)}>
         <div className="space-y-3">
-          <Toggle checked={f.stripe.enabled} onChange={(v) => up("stripe", { enabled: v })} label="Activar Stripe Checkout (tarjeta, Apple Pay, Google Pay)" />
+          <Toggle checked={f.stripe.enabled} onChange={(v) => up("stripe", { enabled: v })} label="Activar pago con tarjeta (Stripe: tarjeta, Apple Pay, Google Pay)" />
+          <Field label="Clave pública (pk_live_… / pk_test_…)" hint="Con ella el formulario de tarjeta aparece dentro de la web. Sin ella, se usa la página de pago de Stripe.">
+            <input className={inputCls} autoComplete="off" value={f.stripe.publishableKey} onChange={(e) => up("stripe", { publishableKey: e.target.value.trim() })} />
+          </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Clave secreta (sk_live_… / sk_test_…)" hint={secretHint(p.stripe.hasSecretKey)}>
               <input className={inputCls} type="password" autoComplete="off" value={f.stripe.secretKey} onChange={(e) => up("stripe", { secretKey: e.target.value })} />
@@ -328,7 +331,7 @@ function Payments({ s, onSaved }: { s: S; onSaved: () => void }) {
             </Field>
           </div>
           <CopyUrl label="URL del webhook" url={p.stripe.webhookUrl} />
-          <p className="text-[11px] text-muted">En Stripe → Desarrolladores → Webhooks, añade esa URL con los eventos checkout.session.completed, checkout.session.async_payment_succeeded y checkout.session.async_payment_failed.</p>
+          <p className="text-[11px] text-muted">En Stripe → Desarrolladores → Webhooks, añade esa URL con los eventos payment_intent.succeeded, payment_intent.payment_failed, checkout.session.completed, checkout.session.async_payment_succeeded y checkout.session.async_payment_failed. Las tres claves deben ser del mismo modo (prueba o real).</p>
         </div>
       </Card>
       <Card title="Bizum (Redsys)" actions={state(p.bizum.ready, p.bizum.fromEnv)}>

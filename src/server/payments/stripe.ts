@@ -47,3 +47,21 @@ export async function stripeFindPaid(orderId: string) {
   const pi = r.data[0];
   return pi ? { ref: pi.id, amountCents: pi.amount_received } : null;
 }
+
+/** Cobro para el formulario de tarjeta embebido (Payment Element): devuelve el client_secret. */
+export async function stripeIntent(o: { id: string; code: string; totalCents: number; customerEmail: string }) {
+  const { s } = await stripe();
+  const pi = await s.paymentIntents.create(
+    {
+      amount: o.totalCents,
+      currency: "eur",
+      automatic_payment_methods: { enabled: true },
+      receipt_email: o.customerEmail || undefined,
+      description: `Pedido ${o.code} · Crea tu Burger`,
+      metadata: { orderId: o.id, code: o.code },
+    },
+    // mismo pedido + mismo importe = mismo cobro (reintentos y dobles clics no duplican)
+    { idempotencyKey: `pi-${o.id}-${o.totalCents}` },
+  );
+  return pi.client_secret!;
+}

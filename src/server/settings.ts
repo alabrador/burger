@@ -52,8 +52,8 @@ export const smtpSchema = z.object({
 export const paymentsSchema = z.object({
   cash: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
   stripe: z
-    .object({ enabled: z.boolean().default(false), secretKeyEnc: z.string().default(""), webhookSecretEnc: z.string().default("") })
-    .default({ enabled: false, secretKeyEnc: "", webhookSecretEnc: "" }),
+    .object({ enabled: z.boolean().default(false), publishableKey: z.string().default(""), secretKeyEnc: z.string().default(""), webhookSecretEnc: z.string().default("") })
+    .default({ enabled: false, publishableKey: "", secretKeyEnc: "", webhookSecretEnc: "" }),
   paypal: z
     .object({
       enabled: z.boolean().default(false),
@@ -125,6 +125,8 @@ export async function paymentConfig() {
   const p = (await getSettings()).payments;
   const e = process.env;
   const stripe = {
+    /** clave pública (pk_…): permite el formulario de tarjeta embebido */
+    publishableKey: e.STRIPE_PUBLISHABLE_KEY || e.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || p.stripe.publishableKey,
     secretKey: e.STRIPE_SECRET_KEY || dec(p.stripe.secretKeyEnc),
     webhookSecret: e.STRIPE_WEBHOOK_SECRET || dec(p.stripe.webhookSecretEnc),
   };

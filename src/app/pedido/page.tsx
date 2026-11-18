@@ -5,6 +5,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { BurgerMark } from "@/components/Brand";
+import StripeCard, { type StripePay } from "@/components/StripeCard";
 
 type O = {
   code: string; status: string; paymentStatus: string; paymentMethod: string; customerName: string; pickupAt: string | null; createdAt: string;
@@ -36,6 +37,7 @@ export default function Pedido() {
   const [qr, setQr] = useState("");
   const [p, setP] = useState({ c: "", t: "", pago: "" });
   const [retrying, setRetrying] = useState(false);
+  const [card, setCard] = useState<StripePay | null>(null);
 
   const load = useCallback(async (c: string, t: string) => {
     const r = await fetch(`/api/orders/${encodeURIComponent(c)}?t=${encodeURIComponent(t)}`, { cache: "no-store" });
@@ -70,7 +72,10 @@ export default function Pedido() {
       return setRetrying(false);
     }
     const pay = j.payment;
-    if (pay.type === "redirect") location.href = pay.url;
+    if (pay.type === "stripe") {
+      setCard(pay);
+      setRetrying(false);
+    } else if (pay.type === "redirect") location.href = pay.url;
     else if (pay.type === "form") {
       const f = document.createElement("form");
       f.method = "POST";
@@ -118,9 +123,15 @@ export default function Pedido() {
                   ) : (
                     <>
                       <p className="text-muted">{p.pago === "ko" ? "El pago no se completó." : "Aún no hemos recibido el pago."}</p>
-                      <button onClick={retry} disabled={retrying} className="cta-gold h-10 rounded-xl px-5 font-display text-sm font-extrabold text-[#1b1208] disabled:opacity-60">
-                        {retrying ? "Abriendo…" : `Pagar ${eur(o.totalCents)}`}
-                      </button>
+                      {card ? (
+                        <div className="text-left">
+                          <StripeCard pay={card} />
+                        </div>
+                      ) : (
+                        <button onClick={retry} disabled={retrying} className="cta-gold h-10 rounded-xl px-5 font-display text-sm font-extrabold text-[#1b1208] disabled:opacity-60">
+                          {retrying ? "Abriendo…" : `Pagar ${eur(o.totalCents)}`}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

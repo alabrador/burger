@@ -10,9 +10,13 @@ import { paymentConfig } from "../settings";
 import { trackToken } from "../tokens";
 import { paypalCreate, paypalRefund } from "./paypal";
 import { redsysForm, redsysOrderNumber, redsysRefund } from "./redsys";
-import { stripeCheckout, stripeRefund } from "./stripe";
+import { stripeCheckout, stripeIntent, stripeRefund } from "./stripe";
 
-export type PaymentStart = { type: "none" } | { type: "redirect"; url: string } | { type: "form"; url: string; fields: Record<string, string> };
+export type PaymentStart =
+  | { type: "none" }
+  | { type: "redirect"; url: string }
+  | { type: "form"; url: string; fields: Record<string, string> }
+  | { type: "stripe"; clientSecret: string; publishableKey: string; returnUrl: string; amountCents: number };
 
 const pageUrl = (o: Order, pago: string) => `${env.baseUrl}/pedido?c=${o.code}&t=${trackToken(o.code)}&pago=${pago}`;
 
@@ -21,7 +25,12 @@ export async function startPayment(o: Order): Promise<PaymentStart> {
   if (o.paymentMethod === "cash" || o.paymentStatus === "paid") return { type: "none" };
   const ok = pageUrl(o, "ok");
   const ko = pageUrl(o, "ko");
-  if (o.paymentMethod === "stripe") return { type: "redirect", url: await stripeCheckout(o, ok, ko) };
+  if (o.paymentMethod === "stripe") {
+    // Con clave pública: formulario de tarjeta dentro de la web. Sin ella: página de pago de Stripe.
+    const pk = (await paymentConfig()).stripe.publishableKey;
+    if (pk) return { type: "stripe", clientSecret: await stripeIntent(o), publishableKey: pk, returnUrl: ok, amountCents: o.totalCents };
+    return { type: "redirect", url: await stripeCheckout(o, ok, ko) };
+  }
   if (o.paymentMethod === "paypal") {
     const r = await paypalCreate(o, `${env.baseUrl}/api/payments/paypal/return?o=${o.id}&t=${trackToken(o.code)}`, ko);
     await db()

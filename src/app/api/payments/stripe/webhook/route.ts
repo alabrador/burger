@@ -4,7 +4,7 @@ import { handle, json } from "@/server/http";
 import { markPaid, markPaymentFailed } from "@/server/orders";
 import { stripe } from "@/server/payments/stripe";
 
-/** Webhook de Stripe: checkout.session.completed / async_payment_* */
+/** Webhook de Stripe: payment_intent.* (formulario embebido) y checkout.session.* (página de Stripe) */
 export const POST = handle(async (req) => {
   const { s, webhookSecret } = await stripe();
   if (!webhookSecret) return json({ error: "webhook sin configurar" }, 500);
@@ -14,6 +14,14 @@ export const POST = handle(async (req) => {
     ev = s.webhooks.constructEvent(raw, req.headers.get("stripe-signature") || "", webhookSecret);
   } catch {
     return json({ error: "firma no válida" }, 400);
+  }
+  if (ev.type === "payment_intent.succeeded" || ev.type === "payment_intent.payment_failed") {
+    const pi = ev.data.object as Stripe.PaymentIntent;
+    const id = pi.metadata?.orderId;
+    if (id && ev.type === "payment_intent.succeeded") await markPaid(id, "stripe", pi.id, pi.amount_received);
+    // Un fallo con tarjeta no cancela el pedido: el cliente puede reintentar en el mismo formulario.
+    await db().insert(schema.webhookEvents).values({ provider: "stripe", eventId: ev.id }).onConflictDoNothing();
+    return json({ received: true });
   }
   const sess = ev.data.object as Stripe.Checkout.Session;
   const orderId = sess.metadata?.orderId;

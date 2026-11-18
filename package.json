@@ -17,6 +17,8 @@
     "@node-rs/argon2": "^2.2.2",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "@stripe/react-stripe-js": "^3.11.0",
+    "@stripe/stripe-js": "^7.10.0",
     "drizzle-orm": "^0.45.4",
     "ioredis": "^6.0.0",
     "jsqr": "^1.4.0",

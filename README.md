@@ -39,7 +39,7 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 | ![Productos](docs/images/admin-productos.png) | ![Detalle de un pedido](docs/images/admin-pedido.png) |
 
 - **Checkout** desde el botón "Pagar" del carrito: nombre, correo, teléfono, hora de recogida (lo antes posible o por franjas), cupón y método de pago. Precios en euros con IVA del 10 % incluido.
-- **Pagos:** tarjeta con Stripe Checkout, Bizum a través del TPV Redsys, PayPal y pago en el local. Cada pasarela confirma el pago con su webhook firmado.
+- **Pagos:** tarjeta con un formulario de Stripe dentro de la propia web (o la página de Stripe Checkout si no hay clave pública), Bizum a través del TPV Redsys, PayPal y pago en el local. Cada pasarela confirma el pago con su webhook firmado.
 - **Seguimiento del pedido** en `/pedido` con el estado en vivo y el **QR de recogida**. El cliente recibe correos cuando el pedido se confirma, entra en preparación, está listo, se entrega, se cancela o se reembolsa.
 - **Panel `/admin`** en tema claro con los colores de la marca (carbón, amarillo y rojo) y menú por secciones:
   - Dashboard: ingresos, pedidos, ticket medio, gráfico por hora o día, cocina en vivo y pedidos recientes.
