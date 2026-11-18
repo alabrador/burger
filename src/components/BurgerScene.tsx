@@ -194,7 +194,7 @@ function Burger({ shift }: { shift: number }) {
 
   return (
     <>
-      <Steam y={TRAY_TOP + top - 0.012} />
+      {layers.length > 0 && <Steam y={TRAY_TOP + layers[layers.length - 1].y} cloud={assets.bun_top.cloud} />}
       <group ref={group} rotation-y={-0.5}>
         <group position-y={TRAY_TOP}>
           {layers.map((l) => (
