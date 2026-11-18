@@ -22,9 +22,9 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 - **Combo:** siempre incluye pan brioche y papas fritas. La bebida es opcional: Coca-Cola o Sprite, normal o zero (+2,50 €), con latas genéricas sin logos.
 - **Carrito:** se elige la cantidad (1 a 10 hamburguesas iguales) y se pulsa "Agregar al carrito". Se pueden añadir hamburguesas distintas. Desde el icono del carrito se cambian cantidades, se quitan hamburguesas y se pulsa "Pagar". El carrito se guarda en el navegador y admite hasta 10 hamburguesas por pedido.
 - **Carta en vivo:** precios, nombres, agotados e ingredientes nuevos salen del admin (`/api/catalog`). Si la API no responde, se usa la carta base.
-- **Diseño oscuro** con letrero de neón, logo propio "Crea tu Burger" y cabecera con navegación tipo píldora.
+- **Diseño oscuro** con letrero de neón, logo propio "Crea tu Burger" y una cabecera sencilla: logo, carrito y cuenta.
 - **Se adapta a cualquier pantalla y no tiene scroll de página.** La app ocupa exactamente la ventana:
-  - Móvil: escena arriba, ingredientes abajo y menú inferior.
+  - Móvil: escena arriba e ingredientes abajo.
   - Tablet: dos columnas.
   - PC: escena grande y panel a la derecha.
   - A partir de 1800 px de ancho todo se escala solo, hasta 4K.
@@ -150,7 +150,7 @@ src/
   components/
     Cart.tsx          Carrito: cantidades, total y botón Pagar
     Checkout.tsx      Formulario de pedido y pago
-    Configurator.tsx  Cabecera, escena, barra de pedido, panel de ingredientes y menú móvil
+    Configurator.tsx  Cabecera, escena, barra de pedido y panel de ingredientes
     BurgerScene.tsx   Escena 3D: luces, bandeja, apilado, animaciones y cámara
     Brand.tsx         Logo, letrero de neón e ilustraciones (papas, latas, botes, iconos)
   lib/
@@ -193,3 +193,4 @@ scripts/              Migrar, cargar datos, pruebas de API y de carga
 9. Backend con Postgres y Redis: pedidos, pagos en euros (Stripe, Bizum, PayPal y efectivo), QR de recogida, correos de seguimiento y panel `/admin`.
 10. Admin en tema claro, gestión de categorías e ingredientes desde el panel, y carta en vivo en la web.
 11. Carrito: "Agregar al carrito" y pago desde el carrito.
+12. Cabecera sin el menú de secciones (Crear, Especiales, Promociones, Alérgenos) ni la barra inferior del móvil.

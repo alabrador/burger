@@ -8,9 +8,7 @@ import {
   Check,
   CirclePlus,
   CupSoda,
-  Gift,
   Hamburger,
-  Info,
   Layers,
   Leaf,
   Maximize,
@@ -18,7 +16,6 @@ import {
   RotateCw,
   ShoppingCart,
   Soup,
-  Star,
   User,
   Cheese,
   type LucideIcon,
@@ -64,13 +61,6 @@ const SECTIONS: {
   { id: "salsas", label: "Salsas", icon: Soup },
   { id: "extras", label: "Extras", icon: CirclePlus },
   { id: "bebida", label: "Bebida del combo", short: "Bebida", icon: CupSoda },
-];
-
-const NAV: { label: string; short: string; icon: LucideIcon }[] = [
-  { label: "Crear Hamburguesa", short: "Crear", icon: Hamburger },
-  { label: "Nuestras Especiales", short: "Especiales", icon: Star },
-  { label: "Promociones", short: "Promociones", icon: Gift },
-  { label: "Alérgenos", short: "Alérgenos", icon: Info },
 ];
 
 /* ---------- toast compartido ---------- */
@@ -155,7 +145,6 @@ export default function Configurator() {
         <Stage />
         <IngredientPanel />
       </main>
-      <BottomNav />
       <Toast />
       <Cart />
       <Checkout />
@@ -182,26 +171,7 @@ function Header() {
         <div className="max-md:mx-auto">
           <Logo compact />
         </div>
-        <nav
-          aria-label="Principal"
-          className="hidden flex-1 justify-center md:flex"
-        >
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-            {NAV.map((n, i) => (
-              <button
-                key={n.label}
-                type="button"
-                aria-current={i === 0 ? "page" : undefined}
-                onClick={() => (i === 0 ? undefined : soon(n.label))}
-                className="flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-medium text-ink/75 transition-colors hover:bg-white/5 hover:text-ink aria-[current=page]:bg-gold/12 aria-[current=page]:text-gold aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(255,194,26,0.45),0_0_18px_-6px_rgba(255,194,26,0.6)] xl:px-4"
-              >
-                <n.icon className="size-4" />
-                <span className="max-lg:hidden">{n.label}</span>
-                <span className="lg:hidden">{n.short}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
+        <div className="hidden flex-1 md:block" />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -774,30 +744,4 @@ function Thumb({ src, size = 44 }: { src: string; size?: number }) {
 function priceLabel(it: LiveItem, surcharge: number) {
   const p = it.id === "patty_x" ? it.price + surcharge : it.price;
   return p ? `+${money(p)}` : "Gratis";
-}
-
-/* ---------- menú inferior móvil ---------- */
-function BottomNav() {
-  return (
-    <nav
-      aria-label="Principal"
-      className="grid h-14 shrink-0 grid-cols-4 border-t border-line bg-bg lg:hidden"
-    >
-      {NAV.map((n, i) => (
-        <button
-          key={n.short}
-          type="button"
-          aria-current={i === 0 ? "page" : undefined}
-          onClick={() => (i === 0 ? undefined : soon(n.label))}
-          className="relative flex flex-col items-center justify-center gap-0.5 text-[0.6875rem] text-ink/85 aria-[current=page]:text-gold"
-        >
-          <n.icon className="size-5" />
-          {n.short}
-          {i === 0 && (
-            <span className="absolute bottom-1 h-1 w-14 rounded-full bg-gold" />
-          )}
-        </button>
-      ))}
-    </nav>
-  );
 }
