@@ -9,8 +9,15 @@ import { BASE_PRICE, CATALOG, DRINK_PRICE, DRINKS, PROTEINS } from "../src/lib/c
 
 const e = process.env;
 const url = e.DATABASE_URL_DIRECT || e.DATABASE_URL_UNPOOLED || e.POSTGRES_URL_NON_POOLING || e.DATABASE_URL || e.POSTGRES_URL;
-if (!url) throw new Error("Falta DATABASE_URL");
-const sql = postgres(url, { max: 1, ssl: /localhost|127\.0\.0\.1/.test(url) ? false : "require", onnotice: () => {} });
+if (!url) {
+  // En el build de Vercel (--optional) sin base de datos configurada, no hacemos nada.
+  if (process.argv.includes("--optional")) {
+    console.log("Sin DATABASE_URL: se omite " + (import.meta.url.includes("seed") ? "la carga de datos" : "la migración"));
+    process.exit(0);
+  }
+  throw new Error("Falta DATABASE_URL");
+}
+const sql = postgres(url, { max: 1, prepare: false, ssl: /localhost|127\.0\.0\.1/.test(url) ? false : "require", onnotice: () => {} });
 const force = process.argv.includes("--force");
 const c = (eur: number) => Math.round(eur * 100);
 
@@ -40,10 +47,8 @@ for (const [id, d] of Object.entries(DRINKS))
 for (const r of rows) {
   await sql`
     insert into products ${sql(r)}
-    on conflict (id) do update set
-      name = excluded.name, kind = excluded.kind, category = excluded.category, sort = excluded.sort,
-      description = excluded.description, grams = excluded.grams, kcal = excluded.kcal, max_qty = excluded.max_qty
-      ${force ? sql`, price_cents = excluded.price_cents, allergens = excluded.allergens` : sql``}
+    on conflict (id) do update set kind = excluded.kind, category = excluded.category, sort = excluded.sort
+      ${force ? sql`, name = excluded.name, description = excluded.description, grams = excluded.grams, kcal = excluded.kcal, max_qty = excluded.max_qty, price_cents = excluded.price_cents, allergens = excluded.allergens` : sql``}
   `;
 }
 console.log(`Productos: ${rows.length}`);

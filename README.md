@@ -66,11 +66,8 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 
 1. Crea una base de datos Postgres en [Neon](https://neon.tech) o [Supabase](https://supabase.com) y un Redis (por ejemplo [Upstash](https://upstash.com)).
 2. Copia `.env.example` a `.env.local` y rellénalo. En Vercel, pon las mismas variables en Settings → Environment Variables.
-3. Crea las tablas, el catálogo y el usuario dueño:
-   ```bash
-   npm run db:migrate
-   ADMIN_EMAIL=tu@correo.com ADMIN_PASSWORD='una-clave-larga-123' npm run db:seed
-   ```
+3. Añade también en Vercel `ADMIN_EMAIL` y `ADMIN_PASSWORD` (mínimo 10 caracteres, con letras y números). En cada despliegue, `npm run build` aplica las migraciones, carga el catálogo sin pisar lo editado en el admin y crea ese usuario dueño si aún no existe. Después del primer despliegue puedes borrar `ADMIN_PASSWORD`.
+   En local: `npm run db:migrate` y `npm run db:seed`.
 4. Entra en `/admin`, activa la verificación en dos pasos en "Mi cuenta" y configura el local, el SMTP y las pasarelas en "Configuración".
 5. Registra las URL de webhook que muestra cada pasarela en Configuración → Pagos.
 
