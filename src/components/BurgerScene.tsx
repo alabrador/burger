@@ -5,7 +5,7 @@ import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
-import { DRACO, HEIGHT_OVERRIDE, MODELS, PROCEDURAL_HEIGHT, TRAY } from "@/lib/models";
+import { DRACO, HEIGHT_OVERRIDE, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
 import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
 
@@ -159,7 +159,7 @@ function Burger({ shift }: { shift: number }) {
       <group position-y={TRAY_TOP}>
         {layers.map((l) => (
           <Layer key={l.key} layerKey={l.key} index={l.i} target={l.y}>
-            {assets[l.base] && <primitive object={assets[l.base].scene.clone(true)} />}
+            {assets[l.base] && <primitive object={assets[l.base].scene.clone(true)} scale-y={SCALE_Y[l.base] ?? 1} />}
           </Layer>
         ))}
       </group>
