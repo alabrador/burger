@@ -24,7 +24,7 @@ import {
   Cheese,
   type LucideIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BUN,
   DRINKS,
@@ -372,21 +372,12 @@ function Ctl({
 }
 
 /* ---------- panel de ingredientes ---------- */
-const PANEL_SECTIONS: Section[] = [
-  "carne",
-  "quesos",
-  "vegetales",
-  "salsas",
-  "extras",
-  "bebida",
-];
 
 function IngredientPanel() {
   const scroller = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState<Section>("carne");
 
-  // Resalta la categoría visible y mueve la barra de progreso al hacer scroll.
+  // Mueve la barra de progreso al hacer scroll.
   useEffect(() => {
     const root = scroller.current;
     if (!root) return;
@@ -394,16 +385,6 @@ function IngredientPanel() {
       const max = root.scrollHeight - root.clientHeight;
       if (bar.current)
         bar.current.style.transform = `scaleX(${max > 0 ? root.scrollTop / max : 1})`;
-      const top = root.getBoundingClientRect().top;
-      let cur: Section = PANEL_SECTIONS[0];
-      for (const id of PANEL_SECTIONS) {
-        const el = document.getElementById(`grp-${id}`);
-        if (el && el.getBoundingClientRect().top - top < 56) cur = id;
-      }
-      if (root.scrollTop < 4) cur = PANEL_SECTIONS[0];
-      if (max > 0 && root.scrollTop >= max - 2)
-        cur = PANEL_SECTIONS[PANEL_SECTIONS.length - 1];
-      setActive(cur);
     };
     onScroll();
     root.addEventListener("scroll", onScroll, { passive: true });
@@ -417,32 +398,12 @@ function IngredientPanel() {
     };
   }, []);
 
-  // Mantiene visible en la barra la categoría activa.
-  useEffect(() => {
-    const chip = document.querySelector<HTMLElement>(`[data-chip="${active}"]`);
-    const nav = chip?.parentElement;
-    if (!chip || !nav) return;
-    const left = chip.offsetLeft - nav.offsetLeft;
-    if (
-      left < nav.scrollLeft ||
-      left + chip.offsetWidth > nav.scrollLeft + nav.clientWidth
-    )
-      nav.scrollTo({ left: left - 8, behavior: "smooth" });
-  }, [active]);
-
-  const jump = useCallback((id: Section) => {
-    const root = scroller.current;
-    const el = document.getElementById(`grp-${id}`);
-    if (!root || !el) return;
-    root.scrollTo({ top: el.offsetTop - root.offsetTop, behavior: "smooth" });
-  }, []);
-
   return (
     <section
       aria-label="Elige tus ingredientes"
       className="card @container flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl"
     >
-      <div className="shrink-0 px-3 pt-2.5 lg:px-4 lg:pt-3.5">
+      <div className="shrink-0 px-3 pb-2.5 pt-2.5 lg:px-4 lg:pt-3.5">
         <div className="flex items-center gap-2.5">
           <span className="grid size-8 place-items-center rounded-xl bg-gold/12 text-gold ring-1 ring-gold/30">
             <IngredientsIcon className="size-5" />
@@ -458,27 +419,6 @@ function IngredientPanel() {
             </p>
           </div>
         </div>
-        <nav
-          aria-label="Ir a categoría"
-          className="no-scrollbar -mx-1 mt-2.5 flex gap-1 overflow-x-auto px-1 pb-2"
-        >
-          {PANEL_SECTIONS.map((id) => {
-            const S = SECTIONS.find((x) => x.id === id)!;
-            return (
-              <button
-                key={id}
-                type="button"
-                data-chip={id}
-                aria-current={active === id ? "true" : undefined}
-                onClick={() => jump(id)}
-                className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-2.5 text-[0.6875rem] font-semibold text-muted transition-colors hover:text-ink aria-[current=true]:border-gold/50 aria-[current=true]:bg-gold/12 aria-[current=true]:text-gold"
-              >
-                <S.icon className="size-3.5" />
-                {S.short ?? S.label}
-              </button>
-            );
-          })}
-        </nav>
       </div>
       <div className="relative h-0.5 shrink-0 bg-white/5">
         <div
