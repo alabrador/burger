@@ -12,11 +12,15 @@ function req(name: string): string {
 }
 
 export const env = {
+  /** Acepta los nombres que crean las integraciones de Vercel (Neon, Supabase, Redis). */
   get databaseUrl() {
-    return req("DATABASE_URL");
+    const e = process.env;
+    const v = e.DATABASE_URL || e.POSTGRES_URL || e.POSTGRES_PRISMA_URL;
+    if (!v) throw new Error("Falta la variable de entorno DATABASE_URL (o POSTGRES_URL)");
+    return v;
   },
   get redisUrl() {
-    return process.env.REDIS_URL || "";
+    return process.env.REDIS_URL || process.env.KV_URL || "";
   },
   /** Clave para firmar QR, enlaces de seguimiento y tokens (mín. 32 caracteres). */
   get appSecret() {
