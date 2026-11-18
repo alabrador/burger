@@ -5,13 +5,13 @@ import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
-import { DRACO, HEIGHT_OVERRIDE, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
+import { DRACO, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
+import { cloudOf, settle, type Cloud } from "@/lib/settle";
 import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
 
 const MODEL_KEYS = Object.keys(MODELS);
 const MODEL_URLS = MODEL_KEYS.map((k) => MODELS[k]);
-const OVERLAP = 0.0004; // las capas se asientan un poco unas sobre otras
 const EXPLODE_GAP = 0.018;
 const TRAY_TOP = 0.008;
 
@@ -72,11 +72,11 @@ function Burger({ shift }: { shift: number }) {
   const spin360 = useRef({ seen: turn, left: 0 });
   const gltfs = useGLTF(MODEL_URLS, DRACO);
   const assets = useMemo(() => {
-    const out: Record<string, { scene: THREE.Object3D; h: number }> = {};
+    const out: Record<string, { scene: THREE.Object3D; h: number; cloud: Cloud }> = {};
     MODEL_KEYS.forEach((k, i) => {
       const scene = gltfs[i].scene;
       prepare(scene);
-      out[k] = { scene, h: HEIGHT_OVERRIDE[k] ?? stackHeight(scene) };
+      out[k] = { scene, h: stackHeight(scene) * (SCALE_Y[k] ?? 1), cloud: cloudOf(scene, SCALE_Y[k] ?? 1) };
     });
     return out;
   }, [gltfs]);
@@ -84,9 +84,14 @@ function Burger({ shift }: { shift: number }) {
   const layers = useMemo(() => {
     const keys = stackOrder(qty, protein, models);
     const bases = keys.map((k) => k.split("#")[0]);
-    const steps = bases.map((b) => (assets[b]?.h ?? PROCEDURAL_HEIGHT[b] ?? 0.003) - OVERLAP + (exploded ? EXPLODE_GAP : 0));
-    const ys = steps.reduce<number[]>((acc, _, i) => [...acc, i === 0 ? 0 : acc[i - 1] + steps[i - 1]], []);
-    return keys.map((key, i) => ({ key, base: bases[i], y: ys[i], i }));
+    const ys = settle(
+      keys.map((key, i) => ({
+        cloud: assets[bases[i]]?.cloud ?? null,
+        angle: seeded(key) * Math.PI * 2,
+        fallback: PROCEDURAL_HEIGHT[bases[i]] ?? 0.003,
+      })),
+    );
+    return keys.map((key, i) => ({ key, base: bases[i], y: ys[i] + (exploded ? i * EXPLODE_GAP : 0), i }));
   }, [qty, protein, models, exploded, assets]);
 
   const top = layers.length ? layers[layers.length - 1].y + assets.bun_top.h : 0.08;

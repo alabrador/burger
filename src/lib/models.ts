@@ -27,9 +27,6 @@ export const MODELS: Record<string, string> = {
 export const TRAY = "/models/bandeja_madera.glb";
 export const DRACO = "/draco/";
 
-/** Alturas que se ajustan a mano (metros) para que la hamburguesa quede compacta. */
-export const HEIGHT_OVERRIDE: Record<string, number> = { egg: 0.0045, jalapeno: 0.0032, pickles: 0.0032 };
-
 /** Aplastado vertical por modelo: el huevo con la yema plana. */
 export const SCALE_Y: Record<string, number> = { egg: 0.38 };
 
