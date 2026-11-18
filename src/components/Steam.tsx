@@ -56,7 +56,7 @@ void main() {
     d += core * mix(0.15, 1.0, tear) * life * (0.55 + 0.45 * s);
   }
   // Nace pegado al pan, más denso abajo, se disuelve arriba y por los lados.
-  float fade = smoothstep(0.0, 0.12, y) * pow(1.0 - smoothstep(0.25, 1.0, y), 1.4);
+  float fade = smoothstep(0.0, 0.12, y) * pow(1.0 - smoothstep(0.15, 0.9, y), 1.6);
   fade *= smoothstep(0.0, 0.18, uv.x) * (1.0 - smoothstep(0.82, 1.0, uv.x));
   d *= fade;
   d = 1.0 - exp(-d * 1.2);
@@ -78,8 +78,8 @@ function Plume({ seed, x, scale, opacity }: { seed: number; x: number; scale: nu
     [seed, opacity],
   );
   useFrame((_, dt) => (mat.uniforms.uTime.value += dt));
-  const w = 0.15 * scale;
-  const h = 0.13 * scale;
+  const w = 0.13 * scale;
+  const h = 0.075 * scale;
   return (
     <mesh position={[x, h / 2, 0]} material={mat} renderOrder={10}>
       <planeGeometry args={[w, h]} />
