@@ -49,8 +49,8 @@ void main() {
   float f = fbm(p + 1.8 * r);
   // Cintas finas en las curvas de nivel del campo + un velo muy suave.
   float k = mix(26.0, 11.0, y); // se ensanchan y difuminan al subir
-  float ribbons = exp(-pow((f - 0.48) * k, 2.0)) + 0.7 * exp(-pow((f - 0.62) * k * 1.2, 2.0));
-  float veil = 0.06 * smoothstep(0.4, 0.7, f);
+  float ribbons = exp(-pow((f - 0.48) * k, 2.0));
+  float veil = 0.0;
   float d = ribbons * (0.55 + 0.45 * r.x) + veil;
   // Nace del pan (columna del ancho del pan) y se disuelve arriba y a los lados.
   float wdt = 0.2 + 0.12 * y;
@@ -99,8 +99,7 @@ export default function Steam({ y, cloud }: { y: number; cloud: Cloud }) {
     <group ref={ref} position-y={y}>
       <group position-y={base}>
         <Billboard lockY>
-          <Ribbon seed={0.21} x={0} z={0} w={0.11} h={0.06} opacity={0.75} />
-          <Ribbon seed={0.67} x={0.008} z={-0.012} w={0.095} h={0.05} opacity={0.45} />
+          <Ribbon seed={0.21} x={0} z={0} w={0.1} h={0.055} opacity={0.5} />
         </Billboard>
       </group>
     </group>
