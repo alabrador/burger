@@ -29,6 +29,55 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
   - A partir de 1800 px de ancho todo se escala solo, hasta 4K.
 - **Scroll del panel** con títulos de categoría fijos, línea de progreso y barra de scroll dorada.
 
+## Pedidos y panel del restaurante (`/admin`)
+
+- **Checkout** desde "Hacer pedido": nombre, correo, teléfono, hora de recogida (lo antes posible o por franjas), cupón y método de pago. Precios en euros con IVA del 10 % incluido.
+- **Pagos:** tarjeta con Stripe Checkout, Bizum a través del TPV Redsys, PayPal y pago en el local. Cada pasarela confirma el pago con su webhook firmado.
+- **Seguimiento del pedido** en `/pedido` con el estado en vivo y el **QR de recogida**. El cliente recibe correos cuando el pedido se confirma, entra en preparación, está listo, se entrega, se cancela o se reembolsa.
+- **Panel `/admin`:**
+  - Resumen de ventas.
+  - Pedidos con filtros y exportación CSV.
+  - Pantalla de cocina que se actualiza sola.
+  - Escáner de QR con la cámara.
+  - Ticket de 80 mm para imprimir.
+  - Productos: precios, agotados y alérgenos.
+  - Clientes, con anonimización RGPD.
+  - Pagos y reembolsos.
+  - Cupones.
+  - Configuración: datos del local, horario, pedidos, SMTP y pasarelas.
+  - Usuarios por rol (dueño, administrador, encargado, cocina, caja).
+  - Registro de auditoría.
+- **Seguridad:**
+  - Contraseñas con Argon2id y verificación en dos pasos (TOTP).
+  - Sesiones en cookie `__Host-` HttpOnly y SameSite=Strict, con caducidad por inactividad.
+  - CSRF con doble envío y comprobación de origen.
+  - Bloqueo tras intentos fallidos y límites de peticiones en Redis.
+  - Cabeceras CSP y HSTS.
+  - QR y enlaces firmados con HMAC.
+  - Secretos de pago y SMTP cifrados con AES-256-GCM.
+- **Carga alta:**
+  - Precios y configuración en caché de Redis.
+  - Claves de idempotencia, para que un doble clic no cree dos pedidos.
+  - Bloqueo por franja para no pasar del máximo de pedidos por franja; "lo antes posible" pasa sola a la siguiente franja libre.
+  - Cola de correos con reintentos.
+  - En local, 400 pedidos simultáneos se procesaron a unos 70 por segundo sin errores.
+
+### Puesta en marcha del backend
+
+1. Crea una base de datos Postgres en [Neon](https://neon.tech) o [Supabase](https://supabase.com) y un Redis (por ejemplo [Upstash](https://upstash.com)).
+2. Copia `.env.example` a `.env.local` y rellénalo. En Vercel, pon las mismas variables en Settings → Environment Variables.
+3. Crea las tablas, el catálogo y el usuario dueño:
+   ```bash
+   npm run db:migrate
+   ADMIN_EMAIL=tu@correo.com ADMIN_PASSWORD='una-clave-larga-123' npm run db:seed
+   ```
+4. Entra en `/admin`, activa la verificación en dos pasos en "Mi cuenta" y configura el local, el SMTP y las pasarelas en "Configuración".
+5. Registra las URL de webhook que muestra cada pasarela en Configuración → Pagos.
+
+`vercel.json` programa `/api/cron` una vez al día, el máximo del plan Hobby. Ese cron cancela los pedidos sin pagar, reintenta correos y limpia sesiones. Mientras haya alguien con la pantalla de cocina abierta, esas tareas también se hacen cada minuto.
+
+Pruebas: `node scripts/api-test.mjs` (56 comprobaciones de la API y la seguridad) y `node scripts/load-test.mjs` (carga), con el servidor en marcha.
+
 ## Modelos 3D (Blender)
 
 Todos los ingredientes se modelaron en Blender 5.2 con materiales procedurales. Luego se hornearon a texturas de 2048 px (color, rugosidad y normal) y se exportaron a GLB con compresión Draco.
@@ -64,6 +113,9 @@ Cada GLB tiene la base en `y = 0` y la propiedad personalizada `stack_height` (e
 - Tailwind CSS 4
 - [React Three Fiber](https://r3f.docs.pmnd.rs) y drei sobre three.js
 - Zustand para el estado del pedido
+- Postgres (Neon o Supabase) con Drizzle ORM, y Redis (ioredis)
+- Zod para validar, Argon2id y TOTP para el acceso, Nodemailer para el correo
+- Stripe, PayPal (Orders v2) y Redsys (Bizum)
 - lucide-react para los iconos
 - Despliegue automático en Vercel desde `main`
 
@@ -84,7 +136,13 @@ src/
     layout.tsx        Fuentes (Archivo, Inter, Kaushan Script) y metadatos
     page.tsx          Página principal
     globals.css       Colores, escalado por pantalla, scroll y botón animado
+    admin/            Panel del restaurante (login, resumen, pedidos, cocina, escáner, etc.)
+    pedido/           Seguimiento del pedido con QR
+    api/              API pública, webhooks de pago, cron y API del admin
+  server/             Backend: BD, Redis, auth, pedidos, pagos, correo, configuración
+  proxy.ts            Protege /admin
   components/
+    Checkout.tsx      Formulario de pedido y pago
     Configurator.tsx  Cabecera, escena, barra de pedido, panel de ingredientes y menú móvil
     BurgerScene.tsx   Escena 3D: luces, bandeja, apilado, animaciones y cámara
     Brand.tsx         Logo, letrero de neón e ilustraciones (papas, latas, botes, iconos)
@@ -98,6 +156,8 @@ public/
   draco/              Decodificador Draco servido por la propia app
 docs/images/          Capturas y renders de este README
 blender/              Fuentes de Blender: .blend, texturas y scripts
+drizzle/              Migraciones SQL
+scripts/              Migrar, cargar datos, pruebas de API y de carga
 ```
 
 ## Añadir un ingrediente
@@ -117,3 +177,4 @@ blender/              Fuentes de Blender: .blend, texturas y scripts
 6. Rediseño oscuro "Crea tu Burger" para PC y móvil, a partir de los mockups del cliente.
 7. Pantalla completa sin scroll, panel de ingredientes en cuadrícula, combo con papas y bebida, y botón "Hacer pedido".
 8. Adaptación automática a monitores grandes, cabecera profesional y scroll mejorado.
+9. Backend con Postgres y Redis: pedidos, pagos en euros (Stripe, Bizum, PayPal y efectivo), QR de recogida, correos de seguimiento y panel `/admin`.

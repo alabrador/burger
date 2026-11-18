@@ -163,4 +163,6 @@ export function totals(qty: Qty, protein: ProteinId) {
   return { price, g, kcal };
 }
 
-export const money = (n: number) => "$" + n.toFixed(2);
+const EUR = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+/** Precio en euros con formato español: 12,90 € */
+export const money = (n: number) => EUR.format(n);

@@ -1,0 +1,38 @@
+import "server-only";
+import Stripe from "stripe";
+import { paymentConfig } from "../settings";
+
+let cache: { key: string; s: Stripe } | null = null;
+export async function stripe() {
+  const c = (await paymentConfig()).stripe;
+  if (!c.secretKey) throw new Error("Stripe no configurado");
+  if (cache?.key !== c.secretKey) cache = { key: c.secretKey, s: new Stripe(c.secretKey, { maxNetworkRetries: 2, timeout: 15_000 }) };
+  return { s: cache.s, webhookSecret: c.webhookSecret };
+}
+
+export async function stripeCheckout(o: { id: string; code: string; totalCents: number; customerEmail: string }, okUrl: string, koUrl: string) {
+  const { s } = await stripe();
+  const session = await s.checkout.sessions.create(
+    {
+      mode: "payment",
+      currency: "eur",
+      customer_email: o.customerEmail,
+      client_reference_id: o.id,
+      metadata: { orderId: o.id, code: o.code },
+      payment_intent_data: { metadata: { orderId: o.id, code: o.code }, description: `Pedido ${o.code}` },
+      line_items: [{ quantity: 1, price_data: { currency: "eur", unit_amount: o.totalCents, product_data: { name: `Pedido ${o.code} · Crea tu Burger` } } }],
+      success_url: okUrl,
+      cancel_url: koUrl,
+      expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
+      locale: "es",
+    },
+    { idempotencyKey: `checkout-${o.id}-${Math.floor(Date.now() / 600_000)}` },
+  );
+  return session.url!;
+}
+
+export async function stripeRefund(paymentIntent: string, amountCents: number, orderId: string) {
+  const { s } = await stripe();
+  const r = await s.refunds.create({ payment_intent: paymentIntent, amount: amountCents }, { idempotencyKey: `refund-${orderId}-${amountCents}` });
+  return r.id;
+}
