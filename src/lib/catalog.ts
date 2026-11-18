@@ -148,8 +148,10 @@ export function stackOrder(qty: Qty, protein: ProteinId, items: ModelMap = STATI
   const single = (p: { id: string; n: number; m: string }) =>
     Array.from({ length: p.n }, (_, i) => (p.id === p.m && i === 0 ? p.m : `${p.m}#${p.id}-${i}`));
 
+  // De abajo arriba: carne con el queso encima (con 2 carnes, queso entre ambas),
+  // salsas sobre el queso, extras y, arriba del todo bajo el pan, los vegetales
+  // (pepinillos, cebolla, tomate y lechuga, que queda la última).
   const out = ["bun_bottom"];
-  for (const p of group(VEG)) out.push(...single(p));
   const portions = 1 + (qty.patty_x ?? 0);
   const slices: string[] = [];
   for (const p of group(CHEESE)) for (let i = 0; i < p.n; i++) slices.push(p.m);
@@ -159,12 +161,12 @@ export function stackOrder(qty: Qty, protein: ProteinId, items: ModelMap = STATI
     const take = p < portions - 1 ? Math.min(1, slices.length - s) : slices.length - s;
     for (let t = 0; t < take; t++, s++) out.push(`${slices[s]}#${s}`);
   }
-  // las salsas van justo encima del queso (o de la carne si no hay queso)
   for (const p of group(SAUCES)) out.push(...single(p));
   for (const p of group(["bacon"])) for (let i = 0; i < p.n; i++) out.push(p.id === "bacon" ? `bacon#${i}` : `bacon#${p.id}-${i}`);
   // capas de proteína reutilizadas como extra (p. ej. otra carne) van sobre el tocino
   for (const p of picked.filter((p) => !known.has(p.m))) out.push(...Array.from({ length: p.n }, (_, i) => `${p.m}#${p.id}-${i}`));
   for (const p of group(TOP)) out.push(...single(p));
+  for (const p of group(VEG).reverse()) out.push(...single(p));
   out.push("bun_top");
   return out;
 }
