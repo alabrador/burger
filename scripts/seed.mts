@@ -3,7 +3,7 @@
  * No pisa precios ya editados en el admin salvo con --force.
  *   ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run db:seed
  */
-import { hash } from "@node-rs/argon2";
+import { hash, verify } from "@node-rs/argon2";
 import postgres from "postgres";
 import { BASE_PRICE, CATALOG, DRINK_PRICE, DRINKS, PROTEINS } from "../src/lib/catalog";
 
@@ -57,11 +57,20 @@ const email = process.env.ADMIN_EMAIL?.toLowerCase().trim();
 const pass = process.env.ADMIN_PASSWORD;
 if (email && pass) {
   if (pass.length < 10) throw new Error("ADMIN_PASSWORD debe tener al menos 10 caracteres");
-  const h = await hash(pass, { memoryCost: 19456, timeCost: 2, parallelism: 1, outputLen: 32 });
-  const r = await sql`
-    insert into staff_users (email, name, password_hash, role)
-    values (${email}, ${process.env.ADMIN_NAME || "Dueño"}, ${h}, 'owner')
-    on conflict (email) do nothing returning id`;
-  console.log(r.length ? `Usuario dueño creado: ${email}` : `El usuario ${email} ya existía (sin cambios)`);
+  const [u] = await sql<{ id: string; password_hash: string }[]>`select id, password_hash from staff_users where email = ${email}`;
+  if (!u) {
+    const h = await hash(pass, { memoryCost: 19456, timeCost: 2, parallelism: 1, outputLen: 32 });
+    await sql`
+      insert into staff_users (email, name, password_hash, role)
+      values (${email}, ${process.env.ADMIN_NAME || "Dueño"}, ${h}, 'owner')
+      on conflict (email) do nothing`;
+    console.log(`Usuario dueño creado: ${email}`);
+  } else if (!(await verify(u.password_hash, pass).catch(() => false))) {
+    // La variable manda: si no coincide, se actualiza la contraseña, se desbloquea y se cierran sus sesiones.
+    const h = await hash(pass, { memoryCost: 19456, timeCost: 2, parallelism: 1, outputLen: 32 });
+    await sql`update staff_users set password_hash = ${h}, failed_logins = 0, locked_until = null, active = true, password_changed_at = now() where id = ${u.id}`;
+    await sql`delete from sessions where user_id = ${u.id}`;
+    console.log(`Contraseña de ${email} actualizada desde ADMIN_PASSWORD`);
+  } else console.log(`El usuario ${email} ya existe y su contraseña coincide con ADMIN_PASSWORD`);
 } else console.log("Sin ADMIN_EMAIL/ADMIN_PASSWORD: no se crea usuario");
 await sql.end();
