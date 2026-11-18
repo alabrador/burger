@@ -31,6 +31,8 @@ type State = {
   turn360: () => void;
   setSection: (s: Section | null) => void;
   addToCart: (unitPrice: number) => void;
+  checkout: boolean;
+  setCheckout: (v: boolean) => void;
 };
 
 const clean = (q: Qty) => Object.fromEntries(Object.entries(q).filter(([, n]) => n > 0));
@@ -68,5 +70,7 @@ export const useBurger = create<State>((set) => ({
   setSpinning: (spinning) => set({ spinning }),
   turn360: () => set((s) => ({ turn: s.turn + 1 })),
   setSection: (section) => set({ section }),
+  checkout: false,
+  setCheckout: (checkout) => set({ checkout }),
   addToCart: (unit) => set((s) => ({ cart: { count: s.cart.count + s.count, total: s.cart.total + unit * s.count }, count: 1 })),
 }));

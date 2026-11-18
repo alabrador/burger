@@ -40,6 +40,7 @@ import {
   type ProteinId,
 } from "@/lib/catalog";
 import { useBurger, type Section } from "@/lib/store";
+import Checkout from "./Checkout";
 import {
   BurgerLoader,
   CanArt,
@@ -111,17 +112,8 @@ function useTotals() {
 }
 
 function useAddToCart() {
-  const add = useBurger((s) => s.addToCart);
-  const protein = useBurger((s) => s.protein);
-  const { unit, total, count } = useTotals();
-  return () => {
-    add(unit);
-    const how = PROTEINS[protein].label.toLowerCase();
-    const what = count > 1 ? `${count} hamburguesas` : "Tu hamburguesa";
-    showToast(
-      `Pedido realizado: ${what.toLowerCase()} (${how}) con papas fritas por ${money(total)}.`,
-    );
-  };
+  const open = useBurger((s) => s.setCheckout);
+  return () => open(true);
 }
 
 export default function Configurator() {
@@ -134,6 +126,7 @@ export default function Configurator() {
       </main>
       <BottomNav />
       <Toast />
+      <Checkout />
     </div>
   );
 }
