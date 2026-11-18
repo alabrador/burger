@@ -1,4 +1,4 @@
-# Arma tu hamburguesa
+# Crea tu Burger
 
 Configurador 3D de hamburguesas hecho con **Next.js**, **Tailwind CSS** y **React Three Fiber**.
 El cliente elige proteína (Angus, pollo a la plancha o pollo crispy) e ingredientes, y la

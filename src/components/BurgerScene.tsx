@@ -65,8 +65,9 @@ function Layer({ layerKey, index, target, children }: LayerProps) {
   );
 }
 
-function Burger() {
-  const { qty, protein, exploded, spinning } = useBurger();
+function Burger({ shift }: { shift: number }) {
+  const { qty, protein, exploded, spinning, turn } = useBurger();
+  const spin360 = useRef({ seen: turn, left: 0 });
   const gltfs = useGLTF(MODEL_URLS, DRACO);
   const assets = useMemo(() => {
     const out: Record<string, { scene: THREE.Object3D; h: number }> = {};
@@ -125,17 +126,30 @@ function Burger() {
     if (g && !drag.current.active) {
       drag.current.v *= Math.pow(0.04, dt);
       g.rotation.y += (spinning ? 0.22 * dt : 0) + drag.current.v * dt * 6;
+      // Vuelta completa de 360° al pulsar el botón.
+      const t = spin360.current;
+      if (t.seen !== turn) {
+        t.seen = turn;
+        t.left = Math.PI * 2;
+      }
+      if (t.left > 0) {
+        const step = Math.min(t.left, Math.max(0.6, t.left * 3.2) * dt);
+        g.rotation.y += step;
+        t.left -= step;
+      }
     }
     // La cámara se aleja y sube según la altura de la pila.
-    const narrow = size.width / size.height < 0.9 ? 1.12 : 1;
+    const narrow = size.width / size.height < 0.9 ? 1.3 : 1;
     const tD = Math.max(0.46, top * 2.4 + 0.18) * narrow;
     const tY = TRAY_TOP + top * 0.48;
     const c = camState.current;
     const k = Math.min(1, dt * 3);
     c.d += (tD - c.d) * k;
     c.y += (tY - c.y) * k;
-    camera.position.set(0, c.y + c.d * 0.28, c.d);
-    camera.lookAt(0, c.y, 0);
+    // shift desplaza la hamburguesa a la derecha para dejar sitio al título.
+    const dx = -(shift || (size.width / size.height < 1 ? 0.07 : 0.06)) * c.d;
+    camera.position.set(dx, c.y + c.d * 0.28, c.d);
+    camera.lookAt(dx, c.y, 0);
   });
 
   return (
@@ -192,21 +206,21 @@ function Loader() {
   return null;
 }
 
-export default function BurgerScene() {
+export default function BurgerScene({ shift = 0 }: { shift?: number }) {
   return (
     <Canvas
       shadows
       dpr={[1, 2]}
       camera={{ fov: 30, near: 0.005, far: 3, position: [0, 0.2, 0.5] }}
       gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.95 }}
-      style={{ touchAction: "pan-y", cursor: "grab" }}
+      style={{ touchAction: "pan-y", cursor: "grab", position: "absolute", inset: 0 }}
       aria-label="Vista 3D de la hamburguesa. Arrastra para girarla."
     >
       <Lights />
       <Suspense fallback={<Loader />}>
-        <Burger />
+        <Burger shift={shift} />
       </Suspense>
-      <ContactShadows position={[0, -0.0005, 0]} opacity={0.28} scale={0.5} blur={2.4} far={0.2} />
+      <ContactShadows position={[0, -0.0005, 0]} opacity={0.5} scale={0.5} blur={2.4} far={0.2} />
     </Canvas>
   );
 }

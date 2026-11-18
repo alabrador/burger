@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { ITEMS, PRESETS, type Doneness, type ProteinId, type Qty } from "./catalog";
+import { ITEMS, PRESETS, type CategoryId, type Doneness, type ProteinId, type Qty } from "./catalog";
+
+export type Section = "base" | CategoryId;
 
 type State = {
   qty: Qty;
@@ -7,7 +9,11 @@ type State = {
   doneness: Doneness;
   exploded: boolean;
   spinning: boolean;
+  /** se incrementa para pedir una vuelta completa de 360° */
+  turn: number;
   activePreset: string | null;
+  section: Section | null;
+  cart: { count: number; total: number };
   setQty: (id: string, n: number) => void;
   toggle: (id: string) => void;
   setProtein: (p: ProteinId) => void;
@@ -15,6 +21,9 @@ type State = {
   applyPreset: (name: string) => void;
   setExploded: (v: boolean) => void;
   setSpinning: (v: boolean) => void;
+  turn360: () => void;
+  setSection: (s: Section | null) => void;
+  addToCart: (price: number) => void;
 };
 
 const clean = (q: Qty) => Object.fromEntries(Object.entries(q).filter(([, n]) => n > 0));
@@ -25,7 +34,10 @@ export const useBurger = create<State>((set) => ({
   doneness: "Tres cuartos",
   exploded: false,
   spinning: true,
+  turn: 0,
   activePreset: PRESETS[0].name,
+  section: "base",
+  cart: { count: 0, total: 0 },
   setQty: (id, n) =>
     set((s) => ({
       qty: clean({ ...s.qty, [id]: Math.max(0, Math.min(ITEMS[id]?.max ?? 1, n)) }),
@@ -41,4 +53,7 @@ export const useBurger = create<State>((set) => ({
   },
   setExploded: (exploded) => set({ exploded }),
   setSpinning: (spinning) => set({ spinning }),
+  turn360: () => set((s) => ({ turn: s.turn + 1 })),
+  setSection: (section) => set({ section }),
+  addToCart: (price) => set((s) => ({ cart: { count: s.cart.count + 1, total: s.cart.total + price } })),
 }));

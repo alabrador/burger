@@ -16,7 +16,8 @@ export type Item = {
   swatch: string;
 };
 
-export type Category = { name: string; items: Item[] };
+export type CategoryId = "carne" | "quesos" | "vegetales" | "salsas" | "extras";
+export type Category = { id: CategoryId; name: string; items: Item[] };
 
 export const BASE_PRICE = 12.9;
 
@@ -30,25 +31,25 @@ export const BUN = {
 
 export const PROTEINS: Record<
   ProteinId,
-  { label: string; title: string; name: string; note: string; g: number; kcal: number; swatch: string; surcharge: number }
+  { label: string; name: string; note: string; promo: string; g: number; kcal: number; swatch: string; surcharge: number }
 > = {
-  angus: { label: "Angus", title: "Angus", name: "Carne Angus 250 g", note: "Sellada a la plancha", g: 250, kcal: 620, swatch: "#5a2f1b", surcharge: 0 },
-  grilled: { label: "Pollo plancha", title: "Pollo", name: "Pechuga de pollo 250 g", note: "A la parrilla con marcas de grill", g: 250, kcal: 410, swatch: "#d8a35c", surcharge: 0 },
-  crispy: { label: "Pollo crispy", title: "Crispy", name: "Pollo crispy 250 g", note: "Empanizado y frito, extra crujiente", g: 280, kcal: 590, swatch: "#c27a26", surcharge: 1 },
+  angus: { label: "Angus", name: "Carne Angus 250 g", note: "Sellada a la plancha", promo: "100% Angus · Sabor premium", g: 250, kcal: 620, swatch: "#5a2f1b", surcharge: 0 },
+  grilled: { label: "Pollo plancha", name: "Pechuga de pollo 250 g", note: "A la parrilla con marcas de grill", promo: "Pechuga entera · A la parrilla", g: 250, kcal: 410, swatch: "#d8a35c", surcharge: 0 },
+  crispy: { label: "Pollo crispy", name: "Pollo crispy 250 g", note: "Empanizado y frito, extra crujiente", promo: "Empanizado casero · Extra crujiente", g: 280, kcal: 590, swatch: "#c27a26", surcharge: 1 },
 };
 
 export const DONENESS: Doneness[] = ["Medio", "Tres cuartos", "Bien cocido"];
 
 export const CATALOG: Category[] = [
   {
-    name: "Extras",
+    id: "carne",
+    name: "Carne",
     items: [
       { id: "patty_x", name: "Porción extra", note: "Otros 250 g de la proteína elegida", price: 5.5, g: 250, kcal: 620, max: 2, swatch: "#5a2f1b" },
-      { id: "bacon", name: "Tocino ahumado", note: "Dos tiras por porción", price: 2, g: 30, kcal: 160, max: 2, swatch: "#9c3a22" },
-      { id: "egg", name: "Huevo frito", note: "Yema suave", price: 1.5, g: 50, kcal: 90, max: 1, swatch: "#f4b21b" },
     ],
   },
   {
+    id: "quesos",
     name: "Quesos",
     items: [
       { id: "cheddar", name: "Cheddar añejo", note: "Se funde sobre la carne", price: 1.5, g: 20, kcal: 80, max: 2, swatch: "#ef9a1e" },
@@ -56,6 +57,7 @@ export const CATALOG: Category[] = [
     ],
   },
   {
+    id: "vegetales",
     name: "Vegetales",
     items: [
       { id: "lettuce", name: "Lechuga", note: "Hoja crespa", price: 0.5, g: 15, kcal: 3, max: 1, swatch: "#79bd42" },
@@ -67,6 +69,7 @@ export const CATALOG: Category[] = [
     ],
   },
   {
+    id: "salsas",
     name: "Salsas",
     items: [
       { id: "house", name: "Salsa de la casa", note: "Mayo ahumada", price: 0, g: 15, kcal: 90, max: 1, swatch: "#e9a46a" },
@@ -75,7 +78,21 @@ export const CATALOG: Category[] = [
       { id: "bbq", name: "BBQ ahumada", price: 0.5, g: 15, kcal: 40, max: 1, swatch: "#5a1c0c" },
     ],
   },
+  {
+    id: "extras",
+    name: "Extras",
+    items: [
+      { id: "bacon", name: "Tocino ahumado", note: "Dos tiras por porción", price: 2, g: 30, kcal: 160, max: 2, swatch: "#9c3a22" },
+      { id: "egg", name: "Huevo frito", note: "Yema suave", price: 1.5, g: 50, kcal: 90, max: 1, swatch: "#f4b21b" },
+    ],
+  },
 ];
+
+/** Miniatura renderizada desde el modelo 3D de cada ingrediente. */
+export function thumb(id: string, protein: ProteinId): string {
+  if (id === "patty_x" || id === "protein") return `/thumbs/${protein === "angus" ? "patty" : protein}.webp`;
+  return `/thumbs/${id}.webp`;
+}
 
 export const ITEMS: Record<string, Item> = Object.fromEntries(
   CATALOG.flatMap((c) => c.items.map((i) => [i.id, i])),

@@ -1,28 +1,25 @@
 @import "tailwindcss";
 
-/* Look claro de cadena de hamburguesas: blanco, rojo principal, amarillo de acento. */
+/* Look oscuro de hamburguesería: carbón, amarillo mostaza de acento y rojo para la compra. */
 @theme {
-  --color-bg: #ffffff;
-  --color-surface: #ffffff;
-  --color-surface-2: #f7f4f0;
-  --color-ink: #25201d;
-  --color-muted: #6e6661;
-  --color-line: #ece5dd;
-  --color-accent: #d7261b;
-  --color-accent-ink: #b71d13;
-  --color-accent-soft: #fdeceb;
-  --color-gold: #ffbc0d;
-  --color-gold-soft: #fff4d1;
-  --color-ok: #2e7d32;
-  --color-stage-a: #fffaf0;
-  --color-stage-b: #ffe6ae;
+  --color-bg: #120d0b;
+  --color-panel: #1c1513;
+  --color-panel-2: #251c19;
+  --color-line: #3a2c27;
+  --color-ink: #f6efe9;
+  --color-muted: #b9aaa2;
+  --color-gold: #ffc21a;
+  --color-gold-2: #ffa400;
+  --color-red: #e3261b;
+  --color-red-2: #b5150d;
+  --color-ok: #3fbf4f;
   --font-display: var(--font-archivo), "Arial Black", system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+  --font-script: var(--font-kaushan), "Brush Script MT", cursive;
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
@@ -31,18 +28,38 @@ body {
   font-family: var(--font-sans);
 }
 
-.brand-mark {
-  color: var(--color-accent);
-  background: linear-gradient(transparent 72%, var(--color-gold) 72%, var(--color-gold) 92%, transparent 92%);
-  padding: 0 0.06em;
+.gold-grad {
+  background: linear-gradient(180deg, #ffd23f 0%, #ffb000 100%);
+  color: #1b1208;
 }
 
+.red-grad {
+  background: linear-gradient(180deg, #ef3a2c 0%, #b5150d 100%);
+  color: #fff;
+}
+
+.card {
+  background: linear-gradient(180deg, rgb(37 28 25 / 0.92), rgb(24 18 16 / 0.92));
+  border: 1px solid var(--color-line);
+}
+
+/* Escenario: pared oscura con luz cálida y mesa de madera abajo. */
 .stage-bg {
-  background: radial-gradient(120% 90% at 50% 30%, var(--color-stage-a), var(--color-stage-b));
+  background:
+    radial-gradient(60% 55% at 72% 22%, rgb(255 120 30 / 0.22), transparent 70%),
+    radial-gradient(40% 40% at 15% 70%, rgb(255 90 20 / 0.08), transparent 70%),
+    linear-gradient(180deg, #1d1411 0%, #140e0c 58%, #2a1a12 74%, #3b2416 100%);
 }
 
-.stripe {
-  background: linear-gradient(90deg, var(--color-accent) 0 70%, var(--color-gold) 70% 100%);
+.neon {
+  filter: drop-shadow(0 0 4px #ff8a1f) drop-shadow(0 0 12px #ff6a00) drop-shadow(0 0 28px rgb(255 90 0 / 0.6));
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
