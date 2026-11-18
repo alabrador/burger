@@ -128,7 +128,8 @@ const STATIC_MODELS: ModelMap = Object.fromEntries(Object.keys(ITEMS).map((id) =
 
 const VEG = ["lettuce", "tomato", "onion", "pickles"];
 const CHEESE = ["cheddar", "swiss"];
-const TOP = ["caramel", "egg", "jalapeno", "house", "ketchup", "mustard", "bbq"];
+const SAUCES = ["house", "ketchup", "mustard", "bbq"];
+const TOP = ["caramel", "egg", "jalapeno"];
 
 /**
  * Orden de abajo hacia arriba. Devuelve claves únicas por capa (p. ej. "cheddar#1");
@@ -143,7 +144,7 @@ export function stackOrder(qty: Qty, protein: ProteinId, items: ModelMap = STATI
     picked
       .filter((p) => models.includes(p.m))
       .sort((x, y) => models.indexOf(x.m) - models.indexOf(y.m) || (x.id === x.m ? -1 : y.id === y.m ? 1 : x.id.localeCompare(y.id)));
-  const known = new Set([...VEG, ...CHEESE, "bacon", ...TOP]);
+  const known = new Set([...VEG, ...CHEESE, ...SAUCES, "bacon", ...TOP]);
   const single = (p: { id: string; n: number; m: string }) =>
     Array.from({ length: p.n }, (_, i) => (p.id === p.m && i === 0 ? p.m : `${p.m}#${p.id}-${i}`));
 
@@ -158,6 +159,8 @@ export function stackOrder(qty: Qty, protein: ProteinId, items: ModelMap = STATI
     const take = p < portions - 1 ? Math.min(1, slices.length - s) : slices.length - s;
     for (let t = 0; t < take; t++, s++) out.push(`${slices[s]}#${s}`);
   }
+  // las salsas van justo encima del queso (o de la carne si no hay queso)
+  for (const p of group(SAUCES)) out.push(...single(p));
   for (const p of group(["bacon"])) for (let i = 0; i < p.n; i++) out.push(p.id === "bacon" ? `bacon#${i}` : `bacon#${p.id}-${i}`);
   // capas de proteína reutilizadas como extra (p. ej. otra carne) van sobre el tocino
   for (const p of picked.filter((p) => !known.has(p.m))) out.push(...Array.from({ length: p.n }, (_, i) => `${p.m}#${p.id}-${i}`));
