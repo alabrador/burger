@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useProgress } from "@react-three/drei";
 import {
+  ArrowRight,
   Beef,
   Check,
   CirclePlus,
@@ -32,7 +33,6 @@ import {
   DRINK_PRICE,
   CATALOG,
   DONENESS,
-  PRESETS,
   PROTEINS,
   money,
   stackOrder,
@@ -274,9 +274,9 @@ function OrderBar() {
   const drink = useBurger((s) => s.drink);
   const add = useAddToCart();
   const btn =
-    "grid size-8 place-items-center rounded-lg text-lg leading-none hover:bg-white/10 disabled:opacity-30";
+    "grid size-7 place-items-center rounded-lg text-lg leading-none hover:bg-white/10 disabled:opacity-30 min-[401px]:size-8";
   return (
-    <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-2xl border border-white/15 bg-black/60 p-1.5 backdrop-blur-md lg:inset-x-auto lg:bottom-4 lg:left-1/2 lg:w-[min(560px,calc(100%-2rem))] lg:-translate-x-1/2 lg:gap-3">
+    <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-2xl border border-white/15 bg-black/60 p-1.5 backdrop-blur-md lg:inset-x-4 lg:bottom-4 lg:gap-3 lg:p-2">
       <div
         className="flex shrink-0 items-center rounded-xl bg-white/8 p-0.5"
         role="group"
@@ -307,7 +307,7 @@ function OrderBar() {
           +
         </button>
       </div>
-      <div className="min-w-[64px] shrink-0">
+      <div className="min-w-0 shrink">
         <p className="truncate text-[10px] text-muted lg:text-[11px]">
           {count > 1
             ? `${count} × ${money(unit)}`
@@ -316,7 +316,7 @@ function OrderBar() {
               : "Con papas fritas"}
         </p>
         <p
-          className="font-display text-lg font-black leading-none text-gold tabular-nums lg:text-[22px]"
+          className="font-display text-lg font-black leading-none text-white tabular-nums lg:text-[24px]"
           aria-live="polite"
         >
           {money(total)}
@@ -325,10 +325,16 @@ function OrderBar() {
       <button
         type="button"
         onClick={add}
-        className="red-grad ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 font-display text-xs font-bold min-[401px]:px-3 min-[401px]:text-[13px] shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition hover:brightness-110 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-11 lg:px-4 lg:text-sm"
+        className="cta-gold group ml-auto flex h-11 shrink-0 items-center gap-2 rounded-xl px-3 font-display text-xs font-extrabold min-[401px]:pr-1.5 min-[401px]:text-[13px] text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white min-[401px]:pl-4 lg:h-12 lg:gap-2.5 lg:pl-5 lg:text-[15px]"
       >
-        <Flame className="size-4 max-[400px]:hidden lg:size-5" />
+        <Flame
+          className="size-4 max-[400px]:hidden lg:size-5"
+          strokeWidth={2.4}
+        />
         Agregar a la plancha
+        <span className="grid size-8 place-items-center rounded-lg bg-[#1b1208] max-[400px]:hidden text-gold transition-transform duration-200 group-hover:translate-x-0.5 lg:size-9">
+          <ArrowRight className="size-4" strokeWidth={2.6} />
+        </span>
       </button>
     </div>
   );
@@ -385,8 +391,6 @@ function Ctl({
 
 /* ---------- panel de ingredientes ---------- */
 function IngredientPanel() {
-  const activePreset = useBurger((s) => s.activePreset);
-  const applyPreset = useBurger((s) => s.applyPreset);
   return (
     <section
       aria-label="Elige tus ingredientes"
@@ -397,23 +401,6 @@ function IngredientPanel() {
           <Layers className="size-5 text-gold" />
           Elige tus ingredientes
         </h2>
-        <div
-          className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto"
-          role="group"
-          aria-label="Combos"
-        >
-          {PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              aria-pressed={activePreset === p.name}
-              onClick={() => applyPreset(p.name)}
-              className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-medium hover:border-gold aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]"
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
         <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-black/25 px-2 py-1 text-[11px] text-muted">
           <Check
             className="size-3.5 shrink-0 rounded-full bg-ok p-0.5 text-white"
@@ -469,9 +456,7 @@ function Group({
           </span>
         ) : null}
       </h3>
-      <div className="grid grid-cols-4 gap-1.5">
-        {children}
-      </div>
+      <div className="grid grid-cols-4 gap-1.5">{children}</div>
       {extra}
     </section>
   );
@@ -497,7 +482,9 @@ function TileText({ name, sub }: { name: string; sub?: string }) {
         {name}
       </span>
       {sub && (
-        <span className="mt-auto text-[10px] leading-tight text-muted">{sub}</span>
+        <span className="mt-auto text-[10px] leading-tight text-muted">
+          {sub}
+        </span>
       )}
     </>
   );
