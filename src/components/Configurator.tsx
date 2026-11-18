@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useProgress } from "@react-three/drei";
 import {
-  ArrowRight,
   Beef,
   Check,
   CirclePlus,
@@ -274,11 +273,11 @@ function OrderBar() {
   const drink = useBurger((s) => s.drink);
   const add = useAddToCart();
   const btn =
-    "grid size-7 place-items-center rounded-lg text-lg leading-none hover:bg-white/10 disabled:opacity-30 min-[401px]:size-8";
+    "grid size-9 place-items-center rounded-lg text-xl leading-none hover:bg-white/10 disabled:opacity-30 lg:size-10";
   return (
-    <div className="absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-2xl border border-white/15 bg-black/60 p-1.5 backdrop-blur-md lg:inset-x-4 lg:bottom-4 lg:gap-3 lg:p-2">
+    <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2 lg:inset-x-6 lg:bottom-6 lg:gap-3">
       <div
-        className="flex shrink-0 items-center rounded-xl bg-white/8 p-0.5"
+        className="pointer-events-auto flex h-11 shrink-0 items-center rounded-xl border border-white/25 bg-black/40 px-0.5 backdrop-blur-sm lg:h-12"
         role="group"
         aria-label="Cantidad de hamburguesas"
       >
@@ -292,7 +291,7 @@ function OrderBar() {
           −
         </button>
         <output
-          className="w-6 text-center font-display text-base font-bold tabular-nums"
+          className="w-6 text-center font-display text-lg font-bold tabular-nums lg:w-8"
           aria-live="polite"
         >
           {count}
@@ -307,8 +306,17 @@ function OrderBar() {
           +
         </button>
       </div>
-      <div className="min-w-0 shrink">
-        <p className="truncate text-[10px] text-muted lg:text-[11px]">
+      <button
+        type="button"
+        onClick={add}
+        aria-label={`Añadir al carrito, ${money(total)}`}
+        className="cta-gold pointer-events-auto flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-3.5 font-display text-base font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-12 lg:px-6 lg:text-lg"
+      >
+        <ShoppingCart className="size-5 lg:size-6" strokeWidth={2.4} />
+        <span className="max-sm:hidden">Añadir al carrito</span>
+      </button>
+      <div className="ml-auto min-w-0 text-right">
+        <p className="truncate text-[11px] text-ink/80 lg:text-sm">
           {count > 1
             ? `${count} × ${money(unit)}`
             : drink
@@ -316,26 +324,12 @@ function OrderBar() {
               : "Con papas fritas"}
         </p>
         <p
-          className="font-display text-lg font-black leading-none text-white tabular-nums lg:text-[24px]"
+          className="font-display text-2xl font-black leading-none text-white tabular-nums drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] lg:text-[34px]"
           aria-live="polite"
         >
           {money(total)}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={add}
-        className="cta-gold group ml-auto flex h-11 shrink-0 items-center gap-2 rounded-xl px-3 font-display text-xs font-extrabold min-[401px]:pr-1.5 min-[401px]:text-[13px] text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white min-[401px]:pl-4 lg:h-12 lg:gap-2.5 lg:pl-5 lg:text-[15px]"
-      >
-        <Flame
-          className="size-4 max-[400px]:hidden lg:size-5"
-          strokeWidth={2.4}
-        />
-        Agregar a la plancha
-        <span className="grid size-8 place-items-center rounded-lg bg-[#1b1208] max-[400px]:hidden text-gold transition-transform duration-200 group-hover:translate-x-0.5 lg:size-9">
-          <ArrowRight className="size-4" strokeWidth={2.6} />
-        </span>
-      </button>
     </div>
   );
 }
