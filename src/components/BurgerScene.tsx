@@ -147,7 +147,7 @@ function Burger({ shift }: { shift: number }) {
     c.d += (tD - c.d) * k;
     c.y += (tY - c.y) * k;
     // shift desplaza la hamburguesa a la derecha para dejar sitio al título.
-    const dx = -(shift || (size.width / size.height < 1 ? 0.07 : 0.06)) * c.d;
+    const dx = -(shift || 0.02) * c.d;
     camera.position.set(dx, c.y + c.d * 0.28, c.d);
     camera.lookAt(dx, c.y, 0);
   });

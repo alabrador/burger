@@ -9,7 +9,6 @@ import {
   Check,
   CirclePlus,
   CupSoda,
-  Flame,
   Gift,
   Hamburger,
   Info,
@@ -18,7 +17,6 @@ import {
   Maximize,
   Menu,
   RotateCw,
-  Scale,
   ShoppingCart,
   Soup,
   Star,
@@ -32,7 +30,6 @@ import {
   DRINKS,
   DRINK_PRICE,
   CATALOG,
-  DONENESS,
   PROTEINS,
   money,
   stackOrder,
@@ -103,17 +100,13 @@ function useTotals() {
 function useAddToCart() {
   const add = useBurger((s) => s.addToCart);
   const protein = useBurger((s) => s.protein);
-  const doneness = useBurger((s) => s.doneness);
   const { unit, total, count } = useTotals();
   return () => {
     add(unit);
-    const how =
-      protein === "angus"
-        ? `Angus, ${doneness.toLowerCase()}`
-        : PROTEINS[protein].label.toLowerCase();
+    const how = PROTEINS[protein].label.toLowerCase();
     const what = count > 1 ? `${count} hamburguesas` : "Tu hamburguesa";
     showToast(
-      `¡A la plancha! ${what} (${how}) con papas fritas por ${money(total)}.`,
+      `Pedido realizado: ${what.toLowerCase()} (${how}) con papas fritas por ${money(total)}.`,
     );
   };
 }
@@ -199,7 +192,6 @@ function Header() {
 /* ---------- escenario 3D ---------- */
 function Stage() {
   const { exploded, spinning, setExploded, setSpinning, turn360 } = useBurger();
-  const { g, kcal, layers } = useTotals();
   const { active, progress } = useProgress();
   const ref = useRef<HTMLElement>(null);
   const fullscreen = () => {
@@ -231,11 +223,6 @@ function Stage() {
           Incluye papas fritas
         </p>
       </div>
-      <dl className="absolute left-3 top-[104px] flex flex-col gap-1.5 max-lg:[@media(max-height:760px)]:hidden lg:left-5 lg:top-[170px]">
-        <Stat icon={Layers} value={String(layers)} label="Capas" />
-        <Stat icon={Scale} value={`≈ ${g} g`} label="Peso aprox." />
-        <Stat icon={Flame} value={kcal.toLocaleString("es")} label="Kcal" />
-      </dl>
       <div className="absolute right-2.5 top-2.5 flex flex-col gap-1.5 lg:right-4 lg:top-1/2 lg:-translate-y-1/2 lg:gap-2">
         <Ctl onClick={turn360} label="Dar una vuelta de 360 grados">
           <span className="font-display text-[11px] font-bold">360°</span>
@@ -334,30 +321,6 @@ function OrderBar() {
         >
           {money(total)}
         </p>
-      </div>
-    </div>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: LucideIcon;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div className="flex min-w-[96px] items-center gap-2 rounded-lg border border-white/20 bg-black/35 px-2 py-1 backdrop-blur-sm lg:min-w-[124px] lg:px-2.5 lg:py-1.5">
-      <Icon className="size-4 shrink-0 lg:size-5" strokeWidth={1.7} />
-      <div className="flex flex-col">
-        <dd className="order-1 whitespace-nowrap font-display text-sm font-bold tabular-nums leading-tight lg:text-base">
-          {value}
-        </dd>
-        <dt className="order-2 text-[10px] text-ink/75 lg:text-[11px]">
-          {label}
-        </dt>
       </div>
     </div>
   );
@@ -581,22 +544,10 @@ function Chips<T extends string>({
 }
 
 function CarneGroup() {
-  const { protein, doneness, setProtein, setDoneness } = useBurger();
+  const { protein, setProtein } = useBurger();
   const extra = CATALOG.find((c) => c.id === "carne")!.items[0];
   return (
-    <Group
-      id="carne"
-      extra={
-        protein === "angus" && (
-          <Chips
-            label="Término de la carne"
-            options={DONENESS}
-            value={doneness}
-            onChange={setDoneness}
-          />
-        )
-      }
-    >
+    <Group id="carne">
       {(Object.keys(PROTEINS) as ProteinId[]).map((k) => {
         const P = PROTEINS[k];
         const on = protein === k;
