@@ -94,13 +94,13 @@ export default function Steam({ y, cloud }: { y: number; cloud: Cloud }) {
   });
   // La base de las cintas queda dentro de la cúpula: el pan tapa el arranque
   // y el humo parece salir de su superficie.
-  const base = crown - 0.014;
+  const base = crown - 0.01;
   return (
     <group ref={ref} position-y={y}>
       <group position-y={base}>
         <Billboard lockY>
-          <Ribbon seed={0.21} x={0} z={0} w={0.14} h={0.1} opacity={0.75} />
-          <Ribbon seed={0.67} x={0.008} z={-0.012} w={0.12} h={0.085} opacity={0.45} />
+          <Ribbon seed={0.21} x={0} z={0} w={0.11} h={0.06} opacity={0.75} />
+          <Ribbon seed={0.67} x={0.008} z={-0.012} w={0.095} h={0.05} opacity={0.45} />
         </Billboard>
       </group>
     </group>
