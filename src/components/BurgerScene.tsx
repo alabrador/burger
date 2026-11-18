@@ -5,7 +5,7 @@ import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { stackOrder } from "@/lib/catalog";
-import { DRACO, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
+import { CONTACT, DRACO, MODELS, PROCEDURAL_HEIGHT, SCALE_Y, TRAY } from "@/lib/models";
 import { cloudOf, settle, type Cloud } from "@/lib/settle";
 import { useLive } from "@/lib/live";
 import { useBurger } from "@/lib/store";
@@ -89,6 +89,7 @@ function Burger({ shift }: { shift: number }) {
         cloud: assets[bases[i]]?.cloud ?? null,
         angle: seeded(key) * Math.PI * 2,
         fallback: PROCEDURAL_HEIGHT[bases[i]] ?? 0.003,
+        contact: CONTACT[bases[i]],
       })),
     );
     return keys.map((key, i) => ({ key, base: bases[i], y: ys[i] + (exploded ? i * EXPLODE_GAP : 0), i }));

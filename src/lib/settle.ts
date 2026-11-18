@@ -63,7 +63,7 @@ function maps(cloud: Cloud, angle: number) {
 }
 
 /** Devuelve la altura de cada capa (origen del modelo) para que repose sobre la anterior. */
-export function settle(layers: { cloud: Cloud | null; angle: number; fallback: number }[]) {
+export function settle(layers: { cloud: Cloud | null; angle: number; fallback: number; contact?: number }[]) {
   const pile = new Float32Array(N * N).fill(-Infinity);
   const ys: number[] = [];
   let prevTop = 0;
@@ -83,7 +83,7 @@ export function settle(layers: { cloud: Cloud | null; angle: number; fallback: n
       }
       if (d.length) {
         d.sort((a, b) => a - b);
-        y = d[Math.min(d.length - 1, Math.floor(d.length * CONTACT))];
+        y = d[Math.min(d.length - 1, Math.floor(d.length * (l.contact ?? CONTACT)))];
       } else y = prevTop;
       y = Math.max(y, ys[i - 1]);
     }

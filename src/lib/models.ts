@@ -30,5 +30,22 @@ export const DRACO = "/draco/";
 /** Aplastado vertical por modelo: el huevo con la yema plana. */
 export const SCALE_Y: Record<string, number> = { egg: 0.38 };
 
+/**
+ * Cuánto se hunde cada capa en la de abajo (percentil de contacto, 0–1).
+ * Más bajo = más aplastada: lechuga, verduras finas y pan se asientan
+ * como en una hamburguesa premium, aunque tapen lo que hay debajo.
+ */
+export const CONTACT: Record<string, number> = {
+  lettuce: 0.3,
+  tomato: 0.5,
+  onion: 0.4,
+  caramel: 0.5,
+  pickles: 0.4,
+  jalapeno: 0.4,
+  bun_top: 0.35,
+  bacon: 0.5,
+  egg: 0.35,
+};
+
 /** Altura por defecto si algún ingrediente futuro aún no tiene modelo (metros). */
 export const PROCEDURAL_HEIGHT: Record<string, number> = {};
