@@ -6,7 +6,6 @@ import { useProgress } from "@react-three/drei";
 import {
   Beef,
   Check,
-  ChevronRight,
   CirclePlus,
   CupSoda,
   Flame,
@@ -31,7 +30,6 @@ import {
   BUN,
   DRINKS,
   DRINK_PRICE,
-  FRIES,
   CATALOG,
   DONENESS,
   PRESETS,
@@ -45,7 +43,7 @@ import {
   type ProteinId,
 } from "@/lib/catalog";
 import { useBurger, type Section } from "@/lib/store";
-import { CanArt, FriesArt, Logo, NeonBurger } from "./Brand";
+import { CanArt, FriesArt, Logo, NeonBurger, SauceBottle } from "./Brand";
 
 const BurgerScene = dynamic(() => import("./BurgerScene"), { ssr: false });
 
@@ -56,8 +54,7 @@ const SECTIONS: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: "vegetales", label: "Vegetales", icon: Leaf },
   { id: "salsas", label: "Salsas", icon: Soup },
   { id: "extras", label: "Extras", icon: CirclePlus },
-  { id: "papas", label: "Papas", icon: Hamburger },
-  { id: "bebida", label: "Bebida", icon: CupSoda },
+  { id: "bebida", label: "Bebida del combo", icon: CupSoda },
 ];
 
 const NAV: { label: string; short: string; icon: LucideIcon }[] = [
@@ -401,7 +398,7 @@ function IngredientPanel() {
           Elige tus ingredientes
         </h2>
         <div
-          className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto lg:flex-wrap"
+          className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto"
           role="group"
           aria-label="Combos"
         >
@@ -417,67 +414,289 @@ function IngredientPanel() {
             </button>
           ))}
         </div>
+        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-black/25 px-2 py-1 text-[11px] text-muted">
+          <Check
+            className="size-3.5 shrink-0 rounded-full bg-ok p-0.5 text-white"
+            strokeWidth={3}
+          />
+          Siempre incluye{" "}
+          <b className="font-semibold text-ink">{BUN.name.toLowerCase()}</b> y{" "}
+          <b className="font-semibold text-ink">papas fritas</b>
+        </p>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2 lg:px-4">
-        <BaseRow />
-        <CarneRow />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 lg:px-4">
+        <CarneGroup />
         {CATALOG.filter((c) => c.id !== "carne").map((c) => (
-          <CategoryRow key={c.id} id={c.id} items={c.items} />
+          <Group key={c.id} id={c.id} count={c.items.length}>
+            {c.items.map((it) => (
+              <ItemTile key={it.id} item={it} />
+            ))}
+          </Group>
         ))}
-        <PapasRow />
-        <BebidaRow />
+        <BebidaGroup />
       </div>
     </section>
   );
 }
 
-function RowShell({
+function Group({
   id,
-  open,
-  summary,
   children,
+  extra,
+  count,
 }: {
   id: Section;
-  open: boolean;
-  summary: React.ReactNode;
-  children?: React.ReactNode;
+  children: React.ReactNode;
+  extra?: React.ReactNode;
+  count?: number;
 }) {
-  const setSection = useBurger((s) => s.setSection);
   const S = SECTIONS.find((s) => s.id === id)!;
+  const qty = useBurger((s) => s.qty);
+  const picked =
+    CATALOG.find((c) => c.id === id)?.items.filter((i) => qty[i.id]).length ??
+    0;
   return (
-    <div id={`sec-${id}`} className="scroll-mt-2 border-t border-line py-1.5">
-      <div className="grid grid-cols-[84px_44px_minmax(0,1fr)_auto] items-center gap-1.5 sm:gap-2">
-        <button
-          type="button"
-          onClick={() => setSection(open ? null : id)}
-          className="flex items-center gap-1.5 text-left font-display text-sm font-bold"
-          aria-expanded={open}
-        >
-          <S.icon className="size-4 shrink-0 text-gold" />
-          {S.label}
-        </button>
-        {summary}
-        {children ? (
+    <section
+      aria-label={S.label}
+      className="border-t border-line pb-2.5 pt-2 first:border-t-0 first:pt-0"
+    >
+      <h3 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+        <S.icon className="size-3.5 text-gold" />
+        {S.label}
+        {count ? (
+          <span className="ml-auto font-medium normal-case tracking-normal">
+            {picked ? `${picked} elegido${picked > 1 ? "s" : ""}` : "Opcional"}
+          </span>
+        ) : null}
+      </h3>
+      <div className="grid grid-cols-4 gap-1.5">
+        {children}
+      </div>
+      {extra}
+    </section>
+  );
+}
+
+const tileCls =
+  "relative flex min-w-0 flex-col items-center justify-between rounded-xl border px-1 pb-1 pt-1 text-center transition-colors";
+const tileOn = "border-gold bg-gold/10";
+const tileOff = "border-line bg-black/20 hover:border-gold/60";
+
+function Tick() {
+  return (
+    <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-gold text-[#1b1208]">
+      <Check className="size-3" strokeWidth={3.5} />
+    </span>
+  );
+}
+
+function TileText({ name, sub }: { name: string; sub?: string }) {
+  return (
+    <>
+      <span className="mt-0.5 line-clamp-2 text-[11px] font-semibold leading-tight">
+        {name}
+      </span>
+      {sub && (
+        <span className="mt-auto text-[10px] leading-tight text-muted">{sub}</span>
+      )}
+    </>
+  );
+}
+
+function ItemTile({ item }: { item: Item }) {
+  const protein = useBurger((s) => s.protein);
+  const n = useBurger((s) => s.qty[item.id] ?? 0);
+  const setQty = useBurger((s) => s.setQty);
+  const on = n > 0;
+  const art =
+    item.id in SAUCE_BOTTLE ? (
+      <SauceBottle
+        color={item.swatch}
+        cap={SAUCE_BOTTLE[item.id]}
+        className="size-9"
+      />
+    ) : (
+      <Thumb src={thumb(item.id, protein)} size={36} />
+    );
+  return (
+    <div className={`${tileCls} ${on ? tileOn : tileOff}`}>
+      <button
+        type="button"
+        aria-pressed={on}
+        onClick={() => setQty(item.id, on ? 0 : 1)}
+        className="flex w-full flex-1 flex-col items-center"
+        aria-label={`${item.name}${on ? ", elegido" : ""}`}
+      >
+        {art}
+        <TileText
+          name={item.name}
+          sub={on && item.max > 1 ? undefined : priceLabel(item, protein)}
+        />
+      </button>
+      {on && item.max > 1 && (
+        <div className="mt-0.5 flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setSection(open ? null : id)}
-            aria-label={open ? `Cerrar ${S.label}` : `Ver todo en ${S.label}`}
-            className="grid size-7 place-items-center rounded-full hover:bg-panel-2"
+            aria-label={`Quitar ${item.name}`}
+            onClick={() => setQty(item.id, n - 1)}
+            className="grid size-5 place-items-center rounded-full bg-panel-2 text-xs leading-none hover:bg-line"
           >
-            <ChevronRight
-              className={`size-4 transition-transform ${open ? "rotate-90" : ""}`}
-            />
+            −
           </button>
-        ) : (
-          <span className="size-7" />
-        )}
-      </div>
-      {open && children && (
-        <div className="mt-1.5 rounded-xl bg-black/25 p-1.5">{children}</div>
+          <output className="w-3 text-center text-[11px] font-bold tabular-nums">
+            {n}
+          </output>
+          <button
+            type="button"
+            aria-label={`Añadir ${item.name}`}
+            disabled={n >= item.max}
+            onClick={() => setQty(item.id, n + 1)}
+            className="grid size-5 place-items-center rounded-full bg-panel-2 text-xs leading-none hover:bg-line disabled:opacity-30"
+          >
+            +
+          </button>
+        </div>
       )}
+      {on && <Tick />}
     </div>
   );
 }
+
+function Chips<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  names,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (v: T) => void;
+  names?: Record<T, string>;
+}) {
+  return (
+    <div role="group" aria-label={label} className="mt-1.5 flex gap-1.5">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          aria-pressed={value === o}
+          onClick={() => onChange(o)}
+          className="flex-1 whitespace-nowrap rounded-full border border-line px-1.5 py-1 text-[11px] aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]"
+        >
+          {names ? names[o] : o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function CarneGroup() {
+  const { protein, doneness, setProtein, setDoneness } = useBurger();
+  const extra = CATALOG.find((c) => c.id === "carne")!.items[0];
+  return (
+    <Group
+      id="carne"
+      extra={
+        protein === "angus" && (
+          <Chips
+            label="Término de la carne"
+            options={DONENESS}
+            value={doneness}
+            onChange={setDoneness}
+          />
+        )
+      }
+    >
+      {(Object.keys(PROTEINS) as ProteinId[]).map((k) => {
+        const P = PROTEINS[k];
+        const on = protein === k;
+        return (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={on}
+            onClick={() => setProtein(k)}
+            className={`${tileCls} ${on ? tileOn : tileOff}`}
+          >
+            <Thumb src={thumb("protein", k)} size={36} />
+            <TileText
+              name={
+                k === "angus"
+                  ? "Angus 250 g"
+                  : k === "grilled"
+                    ? "Pollo plancha"
+                    : "Pollo crispy"
+              }
+              sub={P.surcharge ? `+${money(P.surcharge)}` : "Incluido"}
+            />
+            {on && <Tick />}
+          </button>
+        );
+      })}
+      <ItemTile item={{ ...extra, name: "Doble carne" }} />
+    </Group>
+  );
+}
+
+function BebidaGroup() {
+  const { drink, drinkVariant, setDrink, setDrinkVariant } = useBurger();
+  return (
+    <Group
+      id="bebida"
+      extra={
+        drink && (
+          <Chips
+            label="Tipo de bebida"
+            options={["normal", "zero"] as const}
+            value={drinkVariant}
+            onChange={setDrinkVariant}
+            names={{ normal: "Normal", zero: "Zero azúcar" }}
+          />
+        )
+      }
+    >
+      {([null, "coca", "sprite"] as (DrinkId | null)[]).map((k) => {
+        const on = drink === k;
+        return (
+          <button
+            key={k ?? "none"}
+            type="button"
+            aria-pressed={on}
+            onClick={() => setDrink(k)}
+            className={`${tileCls} ${on ? tileOn : tileOff}`}
+          >
+            {k ? (
+              <CanArt
+                color={DRINKS[k].color}
+                zero={drinkVariant === "zero"}
+                className="size-9"
+              />
+            ) : (
+              <span className="grid size-9 place-items-center text-muted">
+                <CupSoda className="size-5" />
+              </span>
+            )}
+            <TileText
+              name={k ? DRINKS[k].name : "Sin bebida"}
+              sub={k ? `+${money(DRINK_PRICE)}` : "—"}
+            />
+            {on && <Tick />}
+          </button>
+        );
+      })}
+    </Group>
+  );
+}
+
+/** color de la tapa de cada bote de salsa */
+const SAUCE_BOTTLE: Record<string, string> = {
+  house: "#f3ead9",
+  ketchup: "#f4f1ec",
+  mustard: "#c8161d",
+  bbq: "#1b1b1b",
+};
 
 function Thumb({ src, size = 44 }: { src: string; size?: number }) {
   return (
@@ -492,361 +711,10 @@ function Thumb({ src, size = 44 }: { src: string; size?: number }) {
   );
 }
 
-function Summary({
-  name,
-  note,
-  control,
-}: {
-  name: string;
-  note?: string;
-  control?: React.ReactNode;
-}) {
-  return (
-    <div className="flex min-w-0 items-center justify-between gap-2">
-      <div className="min-w-0">
-        <p className="truncate text-[13px] font-semibold leading-tight">
-          {name}
-        </p>
-        {note && <p className="truncate text-[11px] text-muted">{note}</p>}
-      </div>
-      {control}
-    </div>
-  );
-}
-
-function BaseRow() {
-  const open = useBurger((s) => s.section === "base");
-  return (
-    <RowShell
-      id="base"
-      open={open}
-      summary={
-        <>
-          <Thumb src="/thumbs/bun.webp" />
-          <Summary
-            name={BUN.name}
-            note={BUN.note}
-            control={
-              <Check
-                className="size-5 shrink-0 rounded-full bg-ok p-1 text-white"
-                strokeWidth={3}
-                aria-label="Incluido"
-              />
-            }
-          />
-        </>
-      }
-    />
-  );
-}
-
-function CarneRow() {
-  const { protein, doneness, setProtein, setDoneness } = useBurger();
-  const open = useBurger((s) => s.section === "carne");
-  const P = PROTEINS[protein];
-  const extra = CATALOG.find((c) => c.id === "carne")!.items[0];
-  return (
-    <>
-      <RowShell
-        id="carne"
-        open={open}
-        summary={
-          <>
-            <Thumb src={thumb("protein", protein)} />
-            <Summary
-              name={P.name}
-              note={P.note + (P.surcharge ? ` · +${money(P.surcharge)}` : "")}
-            />
-          </>
-        }
-      >
-        <div
-          role="group"
-          aria-label="Proteína"
-          className="grid grid-cols-3 gap-2"
-        >
-          {(Object.keys(PROTEINS) as ProteinId[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              aria-pressed={protein === k}
-              onClick={() => setProtein(k)}
-              className="flex flex-col items-center rounded-xl border border-line px-1 pb-2 pt-1 text-xs font-semibold aria-pressed:border-gold aria-pressed:bg-gold/15"
-            >
-              <Thumb src={thumb("protein", k)} size={44} />
-              {PROTEINS[k].label}
-            </button>
-          ))}
-        </div>
-        <ItemRow item={extra} />
-      </RowShell>
-      {protein === "angus" && (
-        <div
-          role="group"
-          aria-label="Término de la carne"
-          className="-mt-0.5 mb-1.5 flex w-full gap-1.5 pl-[90px] pr-8"
-        >
-          {DONENESS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              aria-pressed={doneness === d}
-              onClick={() => setDoneness(d)}
-              className="flex-1 whitespace-nowrap rounded-full border border-line px-1.5 py-1 text-[11px] aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]"
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-function PapasRow() {
-  return (
-    <RowShell
-      id="papas"
-      open={false}
-      summary={
-        <>
-          <FriesArt className="mx-auto size-11" />
-          <Summary
-            name={FRIES.name}
-            note={FRIES.note}
-            control={
-              <Check
-                className="size-5 shrink-0 rounded-full bg-ok p-1 text-white"
-                strokeWidth={3}
-                aria-label="Incluidas"
-              />
-            }
-          />
-        </>
-      }
-    />
-  );
-}
-
-function BebidaRow() {
-  const { drink, drinkVariant, setDrink, setDrinkVariant } = useBurger();
-  const open = useBurger((s) => s.section === "bebida");
-  const D = drink ? DRINKS[drink] : null;
-  const chip =
-    "flex-1 whitespace-nowrap rounded-full border border-line px-1.5 py-1 text-[11px] aria-pressed:border-gold aria-pressed:[background:linear-gradient(180deg,#ffd23f,#ffb000)] aria-pressed:font-semibold aria-pressed:text-[#1b1208]";
-  return (
-    <>
-      <RowShell
-        id="bebida"
-        open={open}
-        summary={
-          <>
-            {D ? (
-              <CanArt
-                color={D.color}
-                zero={drinkVariant === "zero"}
-                className="mx-auto size-11"
-              />
-            ) : (
-              <span className="mx-auto grid size-11 place-items-center rounded-xl border border-dashed border-line text-muted">
-                <CupSoda className="size-5" />
-              </span>
-            )}
-            <Summary
-              name={
-                D
-                  ? `${D.name}${drinkVariant === "zero" ? " Zero" : ""}`
-                  : "Sin bebida"
-              }
-              note={
-                D
-                  ? `Lata 355 ml · +${money(DRINK_PRICE)}`
-                  : "Toca la flecha para elegir"
-              }
-            />
-          </>
-        }
-      >
-        <div
-          role="group"
-          aria-label="Bebida"
-          className="grid grid-cols-3 gap-1.5"
-        >
-          {([null, "coca", "sprite"] as (DrinkId | null)[]).map((k) => (
-            <button
-              key={k ?? "none"}
-              type="button"
-              aria-pressed={drink === k}
-              onClick={() => setDrink(k)}
-              className="flex flex-col items-center rounded-xl border border-line px-1 pb-1.5 pt-1 text-[11px] font-semibold aria-pressed:border-gold aria-pressed:bg-gold/15"
-            >
-              {k ? (
-                <CanArt
-                  color={DRINKS[k].color}
-                  zero={drinkVariant === "zero"}
-                  className="size-10"
-                />
-              ) : (
-                <span className="grid size-10 place-items-center text-muted">
-                  <CupSoda className="size-5" />
-                </span>
-              )}
-              {k ? DRINKS[k].name : "Sin bebida"}
-            </button>
-          ))}
-        </div>
-      </RowShell>
-      {drink && (
-        <div
-          role="group"
-          aria-label="Tipo de bebida"
-          className="-mt-0.5 mb-1.5 flex w-full gap-1.5 pl-[90px] pr-8"
-        >
-          {(["normal", "zero"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={drinkVariant === v}
-              onClick={() => setDrinkVariant(v)}
-              className={chip}
-            >
-              {v === "normal" ? "Normal" : "Zero azúcar"}
-            </button>
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-function CategoryRow({ id, items }: { id: Section; items: Item[] }) {
-  const qty = useBurger((s) => s.qty);
-  const open = useBurger((s) => s.section === id);
-  const protein = useBurger((s) => s.protein);
-  const chosen = items.filter((i) => qty[i.id]);
-  const first = chosen[0];
-  const S = SECTIONS.find((s) => s.id === id)!;
-  return (
-    <RowShell
-      id={id}
-      open={open}
-      summary={
-        first ? (
-          <>
-            <Thumb src={thumb(first.id, protein)} />
-            <Summary
-              name={first.name}
-              note={
-                chosen.length > 1
-                  ? `+${chosen.length - 1} más · ${chosen
-                      .slice(1)
-                      .map((c) => c.name)
-                      .join(", ")}`
-                  : [first.note, priceLabel(first, protein)]
-                      .filter(Boolean)
-                      .join(" · ")
-              }
-              control={<Control item={first} />}
-            />
-          </>
-        ) : (
-          <>
-            <span className="grid size-11 place-items-center rounded-xl border border-dashed border-line text-muted">
-              <S.icon className="size-5" />
-            </span>
-            <Summary
-              name={`Sin ${S.label.toLowerCase()}`}
-              note="Toca la flecha para elegir"
-            />
-          </>
-        )
-      }
-    >
-      {items.map((it) => (
-        <ItemRow key={it.id} item={it} />
-      ))}
-    </RowShell>
-  );
-}
-
-function ItemRow({ item }: { item: Item }) {
-  const protein = useBurger((s) => s.protein);
-  return (
-    <div className="grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2 px-1 py-1 [&+&]:border-t [&+&]:border-line/60">
-      <Thumb src={thumb(item.id, protein)} size={40} />
-      <div className="min-w-0">
-        <p className="truncate text-[13px] font-semibold">{item.name}</p>
-        <p className="truncate text-[11px] text-muted">
-          {[item.note, priceLabel(item, protein)].filter(Boolean).join(" · ")}
-        </p>
-      </div>
-      <Control item={item} />
-    </div>
-  );
-}
-
 function priceLabel(it: Item, protein: ProteinId) {
   const p =
     it.id === "patty_x" ? it.price + PROTEINS[protein].surcharge : it.price;
-  return p ? `+${money(p)}` : "Sin costo";
-}
-
-function Control({ item }: { item: Item }) {
-  return item.max > 1 ? <Stepper item={item} /> : <Switch item={item} />;
-}
-
-function Stepper({ item }: { item: Item }) {
-  const n = useBurger((s) => s.qty[item.id] ?? 0);
-  const setQty = useBurger((s) => s.setQty);
-  const btn =
-    "grid size-6 place-items-center rounded-full bg-panel-2 text-base leading-none hover:bg-line disabled:opacity-35";
-  return (
-    <div className="flex shrink-0 items-center gap-1 rounded-full border border-line p-0.5">
-      <button
-        type="button"
-        className={btn}
-        aria-label={`Quitar ${item.name}`}
-        disabled={n <= 0}
-        onClick={() => setQty(item.id, n - 1)}
-      >
-        −
-      </button>
-      <output
-        className="w-5 text-center font-display text-sm font-bold tabular-nums"
-        aria-live="polite"
-      >
-        {n}
-      </output>
-      <button
-        type="button"
-        className={btn}
-        aria-label={`Añadir ${item.name}`}
-        disabled={n >= item.max}
-        onClick={() => setQty(item.id, n + 1)}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
-function Switch({ item }: { item: Item }) {
-  const on = useBurger((s) => !!s.qty[item.id]);
-  const toggle = useBurger((s) => s.toggle);
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={item.name}
-      onClick={() => toggle(item.id)}
-      className="relative h-6 w-10 shrink-0 rounded-full bg-panel-2 ring-1 ring-line transition-colors aria-checked:bg-gold aria-checked:ring-gold"
-    >
-      <span
-        className={`absolute top-1 size-4 rounded-full bg-white shadow transition-[left] ${on ? "left-5" : "left-1"}`}
-      />
-    </button>
-  );
+  return p ? `+${money(p)}` : "Gratis";
 }
 
 /* ---------- menú inferior móvil ---------- */
