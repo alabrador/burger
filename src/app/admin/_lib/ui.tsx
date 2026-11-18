@@ -142,7 +142,7 @@ export function Drawer({ open, onClose, title, children, wide }: { open: boolean
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="admin-ui fixed inset-0 z-50 flex justify-end bg-transparent" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
       <button aria-label="Cerrar" className="absolute inset-0 bg-char/45 backdrop-blur-[2px]" onClick={onClose} />
       <div className={cx("relative flex h-full w-full flex-col bg-panel shadow-2xl", wide ? "max-w-2xl" : "max-w-lg")}>
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
