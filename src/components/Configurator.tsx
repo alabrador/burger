@@ -315,10 +315,10 @@ function OrderBar() {
         type="button"
         onClick={add}
         aria-label={`Hacer pedido, ${money(total)}`}
-        className="cta-gold pointer-events-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full px-4 font-sans text-xs font-semibold lg:h-9 lg:rounded-lg lg:px-3 lg:font-display lg:text-[13px] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        className="cta-gold pointer-events-auto flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full font-display lg:h-9 lg:w-auto lg:rounded-lg lg:px-3 lg:text-[13px] lg:font-extrabold text-[#1b1208] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        <ShoppingBag className="size-4 max-lg:hidden" strokeWidth={2.4} />
-        Hacer pedido
+        <ShoppingBag className="size-4" strokeWidth={2.4} />
+        <span className="max-lg:hidden">Hacer pedido</span>
       </button>
       <div className="ml-auto min-w-0 text-right">
         <p className="truncate text-[10px] text-ink/80 lg:text-xs">
