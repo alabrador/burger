@@ -214,3 +214,92 @@ body {
 .admin-ui {
   scrollbar-color: #d8cfc2 transparent;
 }
+
+/* Páginas legales: texto largo legible sobre el fondo oscuro. */
+.legal {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: rgb(246 239 233 / 0.88);
+}
+.legal h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.875rem;
+  line-height: 1.1;
+  color: var(--color-ink);
+}
+.legal h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.125rem;
+  color: var(--color-gold);
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.legal p,
+.legal ul,
+.legal table {
+  margin-top: 0.75rem;
+}
+.legal ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.legal li + li {
+  margin-top: 0.25rem;
+}
+.legal a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal strong {
+  color: var(--color-ink);
+}
+.legal .legal-date {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+.legal-holder {
+  margin-top: 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  background: var(--color-panel);
+  padding: 0.75rem 1rem;
+}
+.legal-holder div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  padding: 0.25rem 0;
+}
+.legal-holder dt {
+  min-width: 10rem;
+  color: var(--color-muted);
+}
+.legal-holder dd {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.legal-table th,
+.legal-table td {
+  border-bottom: 1px solid var(--color-line);
+  padding: 0.5rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.legal-table th {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+@media (max-width: 639px) {
+  .legal-holder div {
+    flex-direction: column;
+  }
+}

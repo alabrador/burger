@@ -6,6 +6,7 @@
 import { hash, verify } from "@node-rs/argon2";
 import postgres from "postgres";
 import { BASE_PRICE, CATALOG, DRINK_PRICE, DRINKS, PROTEINS } from "../src/lib/catalog";
+import { DEFAULT_ALLERGENS } from "../src/lib/allergens";
 
 const e = process.env;
 const url = e.DATABASE_URL_DIRECT || e.DATABASE_URL_UNPOOLED || e.POSTGRES_URL_NON_POOLING || e.DATABASE_URL || e.POSTGRES_URL;
@@ -21,15 +22,7 @@ const sql = postgres(url, { max: 1, prepare: false, ssl: /localhost|127\.0\.0\.1
 const force = process.argv.includes("--force");
 const c = (eur: number) => Math.round(eur * 100);
 
-const ALLERGENS: Record<string, string[]> = {
-  burger: ["gluten", "huevo", "leche", "sésamo"],
-  crispy: ["gluten", "huevo"],
-  cheddar: ["leche"],
-  swiss: ["leche"],
-  house: ["huevo", "mostaza"],
-  mustard: ["mostaza"],
-  egg: ["huevo"],
-};
+const ALLERGENS: Record<string, string[]> = DEFAULT_ALLERGENS;
 
 type Row = { id: string; kind: string; category: string; name: string; description: string | null; price_cents: number; grams: number; kcal: number; max_qty: number; allergens: string[]; sort: number; model: string | null; swatch: string };
 const rows: Row[] = [];

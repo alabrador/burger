@@ -21,6 +21,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import CookieNotice from "./CookieNotice";
+import SiteMenu from "./SiteMenu";
+import Account from "./Account";
+import { useAccount } from "@/lib/account";
 import {
   BUN,
   DRINKS,
@@ -32,6 +36,7 @@ import {
   type DrinkId,
   type ProteinId,
 } from "@/lib/catalog";
+import { makeLine } from "@/lib/lines";
 import { useLive, type LiveItem } from "@/lib/live";
 import { cartCount, cartTotal, loadCart, MAX_BURGERS, useBurger, type Section } from "@/lib/store";
 import Cart from "./Cart";
@@ -85,7 +90,6 @@ function Toast() {
     </p>
   );
 }
-const soon = (what: string) => showToast(`${what}: disponible próximamente.`);
 
 function useTotals() {
   const qty = useBurger((s) => s.qty);
@@ -104,30 +108,11 @@ function useTotals() {
 
 /** Añade la hamburguesa actual al carrito; el pago se hace desde el carrito. */
 function useAddToCart() {
-  const { unit } = useTotals();
   return () => {
     const s = useBurger.getState();
-    const live = useLive.getState();
     if (cartCount(s.cart) + s.count > MAX_BURGERS)
       return showToast(`Máximo ${MAX_BURGERS} hamburguesas por pedido.`);
-    const parts = Object.entries(s.qty)
-      .sort((a, b) => Object.keys(live.items).indexOf(a[0]) - Object.keys(live.items).indexOf(b[0]))
-      .map(([id, n]) => {
-        const name = id === "patty_x" ? (n === 1 ? "Doble carne" : "Triple carne") : (live.items[id]?.name ?? id);
-        return n > 1 && id !== "patty_x" ? `${n}× ${name}` : name;
-      });
-    const drink = s.drink ? `${DRINKS[s.drink].name}${s.drinkVariant === "zero" ? " Zero" : ""}` : "";
-    s.addLine({
-      protein: s.protein,
-      qty: { ...s.qty },
-      drink: s.drink,
-      drinkVariant: s.drinkVariant,
-      doneness: s.doneness,
-      quantity: s.count,
-      unit,
-      title: `Burger ${live.proteins[s.protein]?.name ?? PROTEINS[s.protein].label}`,
-      desc: [parts.join(", ") || "Sin ingredientes extra", ["Papas fritas", drink].filter(Boolean).join(" · ")].join(" · "),
-    });
+    s.addLine(makeLine(s, s.count));
     showToast(`${s.count > 1 ? `${s.count} hamburguesas añadidas` : "Hamburguesa añadida"} al carrito. Abre el carrito para pagar.`);
   };
 }
@@ -137,6 +122,7 @@ export default function Configurator() {
   useEffect(() => {
     load();
     useBurger.setState({ cart: loadCart() });
+    useAccount.getState().refresh();
   }, [load]);
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
@@ -148,6 +134,8 @@ export default function Configurator() {
       <Toast />
       <Cart />
       <Checkout />
+      <Account />
+      <CookieNotice />
     </div>
   );
 }
@@ -157,14 +145,18 @@ function Header() {
   const lines = useBurger((s) => s.cart);
   const openCart = useBurger((s) => s.setCartOpen);
   const cart = { count: cartCount(lines), total: cartTotal(lines) };
+  const [menu, setMenu] = useState(false);
+  const me = useAccount((s) => s.me);
+  const openAccount = useAccount((s) => s.setOpen);
   return (
     <header className="relative z-40 shrink-0 bg-[linear-gradient(180deg,#1f1613_0%,#140e0c_100%)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:h-16 lg:px-4 2xl:px-6">
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-xl hover:bg-white/5 md:hidden"
+          className="grid size-10 place-items-center rounded-xl hover:bg-white/5"
           aria-label="Abrir menú"
-          onClick={() => soon("Menú")}
+          aria-expanded={menu}
+          onClick={() => setMenu(true)}
         >
           <Menu className="size-6" />
         </button>
@@ -192,15 +184,16 @@ function Header() {
           </button>
           <button
             type="button"
-            aria-label="Mi cuenta"
-            onClick={() => soon("Mi cuenta")}
-            className="grid size-10 place-items-center rounded-full bg-[linear-gradient(160deg,#3a2b25,#1f1714)] ring-1 ring-gold/40 transition hover:ring-gold"
+            aria-label={me ? `Mi cuenta: ${me.name}` : "Iniciar sesión o crear cuenta"}
+            onClick={() => openAccount(true)}
+            className={`grid size-10 place-items-center rounded-full ring-1 transition hover:ring-gold ${me ? "bg-gold font-display text-base font-black text-[#1b1208] ring-gold" : "bg-[linear-gradient(160deg,#3a2b25,#1f1714)] ring-gold/40"}`}
           >
-            <User className="size-5" />
+            {me ? me.name.charAt(0).toUpperCase() : <User className="size-5" />}
           </button>
         </div>
       </div>
       <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(227,38,27,0.9)_15%,#ffc21a_50%,rgba(227,38,27,0.9)_85%,transparent)]" />
+      <SiteMenu open={menu} onClose={() => setMenu(false)} />
     </header>
   );
 }

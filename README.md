@@ -84,6 +84,25 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
 
 Pruebas: `node scripts/api-test.mjs` (56 comprobaciones de la API y la seguridad) y `node scripts/load-test.mjs` (carga), con el servidor en marcha.
 
+## Cuenta de cliente
+
+- Botón de usuario de la cabecera: **crear cuenta** (nombre, correo, teléfono opcional y contraseña) e **iniciar sesión**.
+- **Doble verificación:** tras la contraseña (y al registrarse) se envía un **código de 6 cifras al correo**. Al escribir la sexta cifra (o pegar el código) se comprueba solo y, si es correcto, entra. El código caduca en 10 minutos, vale una vez y se anula tras 5 intentos; se puede pedir otro a los 45 s.
+- **Mis pedidos:** historial con el estado y el botón **Repetir**, que vuelve a meter el pedido en el carrito con los precios actuales (quita lo que esté agotado y avisa).
+- Si el cliente ya había pedido como invitado con ese correo, sus pedidos pasan a su cuenta. El checkout se rellena con sus datos.
+- Seguridad: contraseñas con Argon2id, códigos guardados solo como hash en Redis, bloqueo tras intentos fallidos, límites por IP y correo, sesión en cookie `__Host-cb_cliente` HttpOnly (30 días) y comprobación de origen en cada petición.
+- Los códigos se envían con el SMTP de Admin → Configuración. Sin SMTP no se puede entrar. Para probar en local sin SMTP: `MAIL_DEV_LOG=1` escribe el correo en el registro del servidor.
+
+## Información legal y alérgenos
+
+- Menú (icono ☰ de la cabecera) con enlaces a **Alérgenos**, **Condiciones de venta**, **Privacidad**, **Cookies** y **Aviso legal**.
+- Las páginas legales leen la razón social, el NIF, la dirección, el correo y el teléfono de Admin → Configuración → Datos del local. Hay que rellenarlos antes de abrir.
+- `/alergenos`: tabla con los 14 alérgenos de cada producto, tal como se editan en el admin. El carrito muestra también los alérgenos de cada hamburguesa.
+- Aviso de cookies informativo: la web solo usa cookies y almacenamiento técnicos (carrito, pago, panel), así que no pide consentimiento.
+- SEO: título y descripción, imagen para compartir (`src/app/opengraph-image.jpg`), `robots.txt` y `sitemap.xml`. La URL base sale de `APP_BASE_URL` (por defecto https://creatuburger.com).
+
+Los textos legales son una plantilla razonable para un local en España, pero conviene que los revise un asesor.
+
 ## Modelos 3D (Blender)
 
 Todos los ingredientes se modelaron en Blender 5.2 con materiales procedurales. Luego se hornearon a texturas de 2048 px (color, rugosidad y normal) y se exportaron a GLB con compresión Draco.
@@ -194,3 +213,5 @@ scripts/              Migrar, cargar datos, pruebas de API y de carga
 10. Admin en tema claro, gestión de categorías e ingredientes desde el panel, y carta en vivo en la web.
 11. Carrito: "Agregar al carrito" y pago desde el carrito.
 12. Cabecera sin el menú de secciones (Crear, Especiales, Promociones, Alérgenos) ni la barra inferior del móvil.
+13. Fase 3, bloque 1: páginas legales, aviso de cookies, alérgenos en la web y en el carrito, y SEO con imagen para compartir.
+14. Fase 3, bloque 2: cuenta de cliente con contraseña y código por correo que se verifica solo, historial de pedidos y "Repetir".

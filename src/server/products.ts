@@ -2,7 +2,9 @@ import "server-only";
 import { z } from "zod";
 import { MODELS } from "@/lib/models";
 
-export const ALLERGENS = ["gluten", "crustáceos", "huevo", "pescado", "cacahuetes", "soja", "leche", "frutos de cáscara", "apio", "mostaza", "sésamo", "sulfitos", "altramuces", "moluscos"] as const;
+import { ALLERGEN_LIST as ALLERGENS } from "@/lib/allergens";
+
+export { ALLERGENS };
 /** Capas 3D que se pueden reutilizar para un ingrediente (el pan no). */
 export const LAYER_MODELS = Object.keys(MODELS).filter((k) => !k.startsWith("bun_"));
 

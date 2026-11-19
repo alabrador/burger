@@ -3,6 +3,7 @@
 // Carta en vivo: arranca con la carta base (src/lib/catalog.ts) y se reemplaza con
 // la del admin (/api/catalog) en cuanto llega: precios, nombres, agotados e ingredientes nuevos.
 import { create } from "zustand";
+import { DEFAULT_ALLERGENS } from "./allergens";
 import { BASE_PRICE, CATALOG, DRINK_PRICE, PROTEINS, type Item, type ModelMap, type Prices, type ProteinId } from "./catalog";
 
 export type LiveItem = Item & { soldOut: boolean; model: string | null; img: string | null };
@@ -10,7 +11,7 @@ export type LiveCategory = { id: string; name: string; items: LiveItem[] };
 
 type Api = {
   categories: { id: string; name: string }[];
-  products: { id: string; kind: string; category: string; name: string; note: string | null; priceCents: number; grams: number; kcal: number; max: number; soldOut: boolean; model: string | null; swatch: string; img: string | null }[];
+  products: { id: string; kind: string; category: string; name: string; note: string | null; priceCents: number; grams: number; kcal: number; max: number; soldOut: boolean; model: string | null; swatch: string; img: string | null; allergens?: string[] }[];
 };
 
 type Live = {
@@ -22,6 +23,8 @@ type Live = {
   proteins: Record<ProteinId, { name: string; soldOut: boolean; available: boolean }>;
   drinkPrice: number;
   drinksOut: Set<string>;
+  /** alérgenos por id de producto (pan, proteínas e ingredientes) */
+  allergens: Record<string, string[]>;
   loaded: boolean;
   load: () => Promise<void>;
 };
@@ -50,6 +53,7 @@ export const useLive = create<Live>((set, get) => ({
   proteins: Object.fromEntries(Object.entries(PROTEINS).map(([k, p]) => [k, { name: p.label, soldOut: false, available: true }])) as Live["proteins"],
   drinkPrice: DRINK_PRICE,
   drinksOut: new Set(),
+  allergens: DEFAULT_ALLERGENS,
   loaded: false,
   load: async () => {
     if (get().loaded) return;
@@ -80,6 +84,7 @@ export const useLive = create<Live>((set, get) => ({
         proteins,
         drinkPrice: (byId.get("coca") ?? byId.get("sprite"))?.priceCents ? (byId.get("coca") ?? byId.get("sprite"))!.priceCents / 100 : DRINK_PRICE,
         drinksOut: new Set(d.products.filter((p) => p.kind === "drink" && p.soldOut).map((p) => p.id).concat(["coca", "coca_zero", "sprite", "sprite_zero"].filter((id) => !byId.has(id)))),
+        allergens: Object.fromEntries(d.products.map((p) => [p.id, p.allergens ?? DEFAULT_ALLERGENS[p.id] ?? []])),
         loaded: true,
       });
     } catch {

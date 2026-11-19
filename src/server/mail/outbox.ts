@@ -42,6 +42,22 @@ async function getTransport() {
   return { t: transport.t, from: { name: c.fromName, address: c.fromEmail }, replyTo: c.replyTo || undefined };
 }
 
+/**
+ * Envío inmediato (sin cola) para códigos de acceso: el cliente está esperando.
+ * Con MAIL_DEV_LOG=1 y sin SMTP, el correo se escribe en el registro del servidor (solo pruebas).
+ */
+export async function sendNow(m: { to: string; subject: string; html: string; text: string }) {
+  const tr = await getTransport();
+  if (!tr) {
+    if (process.env.MAIL_DEV_LOG === "1") {
+      console.log(`[mail] ${m.to} · ${m.subject}\n${m.text}`);
+      return;
+    }
+    throw new Error("SMTP sin configurar");
+  }
+  await tr.t.sendMail({ from: tr.from, replyTo: tr.replyTo, to: m.to, subject: m.subject, html: m.html, text: m.text });
+}
+
 export async function sendTest(to: string) {
   const tr = await getTransport();
   if (!tr) throw new Error("SMTP sin configurar (servidor y remitente)");

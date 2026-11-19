@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useAccount } from "@/lib/account";
 import { Banknote, CreditCard, Loader2, Lock, Smartphone, Wallet, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pickupSlots, type DayHours } from "@/lib/hours";
@@ -121,7 +123,11 @@ function Dialog({ onClose }: { onClose: () => void }) {
 
   const [store, setStore] = useState<Store | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [cust, setCust] = useState(() => (typeof window === "undefined" ? { name: "", email: "", phone: "" } : remember.get()));
+  const [cust, setCust] = useState(() => {
+    if (typeof window === "undefined") return { name: "", email: "", phone: "" };
+    const me = useAccount.getState().me;
+    return me ? { name: me.name, email: me.email, phone: me.phone ?? "" } : remember.get();
+  });
   const [pickup, setPickup] = useState("asap");
   const [method, setMethod] = useState<keyof typeof METHODS | "">("");
   const [coupon, setCoupon] = useState("");
@@ -398,7 +404,17 @@ function Dialog({ onClose }: { onClose: () => void }) {
           <div className="space-y-1.5 text-xs text-muted">
             <label className="flex items-start gap-2">
               <input type="checkbox" required checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 accent-[#ffc21a]" />
-              <span>Acepto que se usen mis datos para gestionar el pedido y avisarme de su estado (RGPD).</span>
+              <span>
+                Acepto las{" "}
+                <Link href="/condiciones" target="_blank" className="text-gold underline underline-offset-2">
+                  condiciones de venta
+                </Link>{" "}
+                y que se usen mis datos para gestionar el pedido y avisarme de su estado, según la{" "}
+                <Link href="/privacidad" target="_blank" className="text-gold underline underline-offset-2">
+                  política de privacidad
+                </Link>
+                .
+              </span>
             </label>
             <label className="flex items-start gap-2">
               <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-0.5 accent-[#ffc21a]" />
