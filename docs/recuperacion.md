@@ -6,25 +6,21 @@ Qué hacer cuando algo se rompe en Crea tu Burger, y qué hay preparado para ell
 
 Toda la información del negocio está en Postgres: pedidos, pagos, clientes, carta, fotos de productos, usuarios del admin y configuración. Redis solo guarda caché y límites, así que se puede perder sin consecuencias.
 
-Hay dos redes de seguridad independientes:
+Hay varias redes de seguridad independientes:
 
 1. **La del proveedor (Neon o Supabase).** Permite volver la base a un momento concreto de los últimos días (Neon: "Restore" / "Branches"; Supabase: "Database → Backups"). Es lo más rápido si el problema es un borrado o un error reciente.
-2. **Copias propias diarias** en GitHub Actions (workflow **Copia de seguridad**). Sirven aunque se pierda la cuenta del proveedor o haya que cambiar de proveedor.
-   - Cada noche a las 03:30 UTC se hace un `pg_dump` completo, cifrado con AES-256.
-   - Se guarda como artefacto del workflow: 30 días las diarias y 90 días las de los domingos.
-   - Justo después se hace un **simulacro**: la copia se restaura en un Postgres vacío y se comprueba que tiene tablas, productos y un usuario dueño. El resumen del workflow muestra cuántos pedidos, pagos y clientes contiene.
-   - Si la copia o el simulacro fallan, GitHub manda un correo de fallo.
+2. **Copias diarias desde la propia web (principal).** La tarea diaria de Vercel (`/api/cron`) exporta todas las tablas, las comprime y las cifra con AES-256-GCM (clave derivada de `BACKUP_PASSPHRASE`). Después comprueba la copia: la vuelve a abrir y cuenta las filas. Si está bien, la guarda en **Vercel Blob** (privado) y borra las que caducan: se conservan 30 días, y las de los domingos 90. Si algo falla, llega un correo de aviso. En **Admin → Copias** se ven, se descargan y se puede hacer una al momento.
+3. **Copias con GitHub Actions (opcional).** El workflow **Copia de seguridad** hace un `pg_dump` y un simulacro de restauración cada noche. Solo funciona si la cuenta de GitHub tiene Actions activo (es gratis en repositorios públicos, salvo que haya un bloqueo de facturación).
 
 ### Ponerlo en marcha (una vez)
 
-En GitHub → el repositorio → **Settings → Secrets and variables → Actions → New repository secret**:
+En Vercel:
 
-| Secreto | Valor |
-| --- | --- |
-| `BACKUP_DATABASE_URL` | La conexión **directa** a la base de producción (en Neon, la que no lleva `-pooler`; es la misma que `DATABASE_URL_DIRECT`). |
-| `BACKUP_PASSPHRASE` | Una frase larga (20 caracteres o más) para cifrar las copias. Genera una con `openssl rand -base64 32`. |
+1. **Storage → Create → Blob**, con acceso **Private**, y conéctalo al proyecto. Así se crea `BLOB_READ_WRITE_TOKEN`.
+2. **Settings → Environment Variables**: añade `BACKUP_PASSPHRASE`, una frase de 20 caracteres o más (por ejemplo, `openssl rand -base64 32`).
+3. Vuelve a desplegar, entra en **Admin → Copias** y pulsa **Hacer copia ahora**.
 
-Después, en **Actions → Copia de seguridad → Run workflow**, lanza la primera copia y comprueba que los dos pasos salen en verde.
+Para GitHub Actions (opcional), añade en Settings → Secrets and variables → Actions `BACKUP_DATABASE_URL` (conexión **directa**, sin `-pooler`) y `BACKUP_PASSPHRASE`.
 
 > **Guarda fuera de GitHub y de Vercel**, en un gestor de contraseñas: `BACKUP_PASSPHRASE`, `APP_ENCRYPTION_KEY` y `APP_SECRET`. Sin la frase de paso no se puede abrir ninguna copia. Sin `APP_ENCRYPTION_KEY`, las claves de las pasarelas de pago, el SMTP y los códigos de dos pasos guardados en la base no se pueden descifrar y habría que volver a introducirlos.
 
@@ -32,16 +28,28 @@ Después, en **Actions → Copia de seguridad → Run workflow**, lanza la prime
 
 La forma segura es restaurar en una base **nueva** y luego apuntar la web a ella. Así la base dañada sigue intacta por si hace falta algo de ella.
 
+**Copia de la web (.cbk, Admin → Copias → Descargar)**, desde un ordenador con Node y este repositorio:
+
+```bash
+# 1. Comprobar que la copia se abre y ver cuántas filas tiene (no toca ninguna base)
+BACKUP_PASSPHRASE=... npx tsx scripts/backup/restore-app.mts copia.cbk --check
+# 2. Restaurar en una base nueva: aplica las migraciones y carga los datos, todo o nada
+BACKUP_PASSPHRASE=... RESTORE_DATABASE_URL=postgres://... npx tsx scripts/backup/restore-app.mts copia.cbk
+```
+
+Después, en Vercel → Settings → Environment Variables, cambia `DATABASE_URL` (con pooler) y `DATABASE_URL_DIRECT` a la base nueva y vuelve a desplegar.
+
+**Copia de GitHub Actions (.dump.gpg):**
+
 1. Crea una base vacía: en Neon, una rama nueva o un proyecto nuevo; en Supabase, un proyecto nuevo.
 2. Añade el secreto `RESTORE_DATABASE_URL` en GitHub con la conexión directa a esa base nueva.
 3. En **Actions → Restaurar copia → Run workflow**:
-   - `copia`: déjalo vacío para usar la más reciente, o pon el nombre de una concreta (se ve en cada ejecución de "Copia de seguridad", por ejemplo `copia-20261119-123456789`).
+   - `copia`: déjalo vacío para usar la más reciente, o pon el nombre de una concreta.
    - `confirmar`: escribe `RESTAURAR`.
 4. Al terminar, el resumen muestra los recuentos de pedidos, pagos y clientes. Compruébalos.
-5. En Vercel → Settings → Environment Variables, cambia `DATABASE_URL` (con pooler) y `DATABASE_URL_DIRECT` a la base nueva y vuelve a desplegar. El despliegue aplica las migraciones que falten.
-6. Cambia también `BACKUP_DATABASE_URL` en GitHub para que las copias sigan saliendo de la base buena.
+5. Cambia `DATABASE_URL` y `DATABASE_URL_DIRECT` en Vercel a la base nueva y vuelve a desplegar. Cambia también `BACKUP_DATABASE_URL` en GitHub.
 
-Desde un ordenador con Postgres 18 también se puede hacer a mano:
+La copia de GitHub (.dump.gpg) también se puede restaurar a mano desde un ordenador con Postgres 18:
 
 ```bash
 BACKUP_PASSPHRASE=... RESTORE_DATABASE_URL=postgres://... scripts/backup/restore.sh copia.dump.gpg

@@ -7,9 +7,13 @@ import { processOutbox, requeueStuck } from "@/server/mail/outbox";
 import { expireUnpaid } from "@/server/orders";
 import { reportError } from "@/server/errors";
 import { reconcilePayments } from "@/server/reconcile";
+import { nightlyBackup } from "@/server/backup";
+
+// La copia de seguridad puede tardar más que una petición normal.
+export const maxDuration = 60;
 
 /**
- * Tareas periódicas: cancela pedidos sin pagar, reintenta correos, limpia sesiones y concilia pagos.
+ * Tareas periódicas: cancela pedidos sin pagar, reintenta correos, limpia sesiones, concilia pagos y hace la copia de seguridad.
  * Protegido con CRON_SECRET (Vercel Cron envía Authorization: Bearer <CRON_SECRET>).
  */
 export const GET = handle(async (req) => {
@@ -26,5 +30,6 @@ export const GET = handle(async (req) => {
   });
   // Errores resueltos de hace más de 90 días ya no aportan nada.
   await db().delete(schema.appErrors).where(sql`resolved_at < now() - interval '90 days'`);
-  return json({ expired, mail, reconcile });
+  const backup = await nightlyBackup();
+  return json({ expired, mail, reconcile, backup });
 });

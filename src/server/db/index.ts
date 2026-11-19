@@ -27,4 +27,10 @@ export function db(): DB {
   return g.__cbDb;
 }
 
+/** Cliente postgres.js de bajo nivel (copias de seguridad). */
+export function rawSql(): postgres.Sql {
+  db();
+  return g.__cbSql!;
+}
+
 export { schema };
