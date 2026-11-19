@@ -10,7 +10,25 @@ const KEEP_DAYS = 30;
 const KEEP_SUNDAY_DAYS = 90;
 const access = () => (process.env.BACKUP_BLOB_ACCESS === "public" ? "public" : "private") as "public" | "private";
 
-export const backupReady = () => ({ passphrase: (process.env.BACKUP_PASSPHRASE || "").length >= 20, blob: !!process.env.BLOB_READ_WRITE_TOKEN });
+/**
+ * Credenciales del almacén Blob. Según cómo se conecte en Vercel hay:
+ * - un token BLOB_READ_WRITE_TOKEN (o <PREFIJO>_READ_WRITE_TOKEN si se puso otro prefijo), o
+ * - BLOB_STORE_ID (o <PREFIJO>_STORE_ID) con autenticación OIDC automática de Vercel.
+ */
+function blobAuth(): { token?: string; storeId?: string } | null {
+  const e = process.env;
+  if (e.BLOB_READ_WRITE_TOKEN) return { token: e.BLOB_READ_WRITE_TOKEN };
+  for (const [k, v] of Object.entries(e)) if (k.endsWith("_READ_WRITE_TOKEN") && v?.startsWith("vercel_blob_rw_")) return { token: v };
+  if (e.BLOB_STORE_ID) return { storeId: e.BLOB_STORE_ID };
+  for (const [k, v] of Object.entries(e)) if (k.endsWith("_STORE_ID") && v?.startsWith("store_")) return { storeId: v };
+  return null;
+}
+const passState = () => {
+  const n = (process.env.BACKUP_PASSPHRASE || "").trim().length;
+  return n === 0 ? "missing" : n < 20 ? "short" : "ok";
+};
+
+export const backupReady = () => ({ passphrase: passState() === "ok", passphraseState: passState(), blob: !!blobAuth() });
 
 export type BackupInfo = { pathname: string; size: number; uploadedAt: string };
 
@@ -20,9 +38,10 @@ export type BackupInfo = { pathname: string; size: number; uploadedAt: string };
  */
 export async function runBackup(): Promise<{ pathname: string; size: number; rows: number; deleted: number }> {
   const r = backupReady();
-  if (!r.passphrase) throw new ApiError(503, "Falta BACKUP_PASSPHRASE (mínimo 20 caracteres) en Vercel");
-  if (!r.blob) throw new ApiError(503, "Falta BLOB_READ_WRITE_TOKEN: crea un almacén Blob en Vercel y conéctalo al proyecto");
-  const pass = process.env.BACKUP_PASSPHRASE!;
+  if (!r.passphrase)
+    throw new ApiError(503, r.passphraseState === "short" ? "BACKUP_PASSPHRASE es demasiado corta: necesita 20 caracteres o más" : "Falta BACKUP_PASSPHRASE en Vercel");
+  if (!r.blob) throw new ApiError(503, "No hay almacén Blob conectado: crea uno en Vercel (Storage → Blob) y conéctalo al proyecto");
+  const pass = process.env.BACKUP_PASSPHRASE!.trim();
   const data = await dumpDatabase(rawSql());
   const file = encryptBackup(data, pass);
   // Simulacro: la copia se abre con la frase y tiene exactamente las mismas filas.
@@ -33,6 +52,7 @@ export async function runBackup(): Promise<{ pathname: string; size: number; row
   const blob = await put(`${PREFIX}creatuburger-${stamp}.cbk`, file, {
     access: access(),
     addRandomSuffix: true,
+    ...blobAuth(),
     contentType: "application/octet-stream",
   });
   const deleted = await rotate();
@@ -48,7 +68,7 @@ async function rotate() {
     const age = (now - t.getTime()) / 86_400_000;
     return age > (t.getUTCDay() === 0 ? KEEP_SUNDAY_DAYS : KEEP_DAYS);
   });
-  if (old.length) await del(old.map((b) => b.pathname));
+  if (old.length) await del(old.map((b) => b.pathname), { ...blobAuth() });
   return old.length;
 }
 
@@ -57,7 +77,7 @@ export async function listBackups(): Promise<BackupInfo[]> {
   const out: BackupInfo[] = [];
   let cursor: string | undefined;
   do {
-    const r = await list({ prefix: PREFIX, cursor, limit: 1000 });
+    const r = await list({ prefix: PREFIX, cursor, limit: 1000, ...blobAuth(), abortSignal: AbortSignal.timeout(10_000) });
     for (const b of r.blobs) out.push({ pathname: b.pathname, size: b.size, uploadedAt: new Date(b.uploadedAt).toISOString() });
     cursor = r.hasMore ? r.cursor : undefined;
   } while (cursor);
@@ -66,7 +86,7 @@ export async function listBackups(): Promise<BackupInfo[]> {
 
 export async function openBackup(pathname: string) {
   if (!pathname.startsWith(PREFIX) || pathname.includes("..")) throw new Error("Copia no válida");
-  return get(pathname, { access: access() });
+  return get(pathname, { access: access(), ...blobAuth() });
 }
 
 /** La usa el cron diario: nunca lanza, avisa por correo si falla. */

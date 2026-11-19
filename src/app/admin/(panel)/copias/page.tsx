@@ -6,7 +6,7 @@ import { api, dt } from "../../_lib/api";
 import { Btn, Card, Empty, PageHead, Table, useData, useToast } from "../../_lib/ui";
 
 type B = { pathname: string; size: number; uploadedAt: string };
-type D = { ready: { passphrase: boolean; blob: boolean }; backups: B[] };
+type D = { ready: { passphrase: boolean; passphraseState?: "ok" | "missing" | "short"; blob: boolean }; backups: B[]; listError?: string };
 
 const size = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
@@ -41,20 +41,32 @@ export default function Copias() {
         }
       />
       {error && <p className="mb-4 rounded-xl bg-red/10 px-4 py-3 text-sm text-red">{error}</p>}
+      {data?.listError && (
+        <p className="mb-4 rounded-xl bg-red/10 px-4 py-3 text-sm text-red">
+          No se puede leer el almacén Blob: {data.listError}. Revisa que el almacén esté conectado a este proyecto en Production.
+        </p>
+      )}
       {data && !ready && (
         <Card className="mb-4" title="Falta configurar las copias">
           <ol className="list-decimal space-y-1.5 pl-5 text-sm">
             {!data.ready.blob && (
               <li>
-                En Vercel → Storage → <b>Create → Blob</b>, elige acceso <b>Private</b> y conéctalo a este proyecto (crea solo la variable <code>BLOB_READ_WRITE_TOKEN</code>).
+                En Vercel → Storage → <b>Create → Blob</b>, elige acceso <b>Private</b> y conéctalo a este proyecto (Vercel crea solo las variables <code>BLOB_…</code>).
               </li>
             )}
-            {!data.ready.passphrase && (
+            {data.ready.passphraseState === "short" && (
+              <li>
+                <code>BACKUP_PASSPHRASE</code> existe pero es demasiado corta: necesita <b>20 caracteres o más</b>. Cámbiala en Vercel → Settings → Environment Variables.
+              </li>
+            )}
+            {!data.ready.passphrase && data.ready.passphraseState !== "short" && (
               <li>
                 En Vercel → Settings → Environment Variables, añade <code>BACKUP_PASSPHRASE</code> con una frase de 20 caracteres o más. Guárdala también en tu gestor de contraseñas: sin ella no se puede abrir ninguna copia.
               </li>
             )}
-            <li>Vuelve a desplegar y pulsa «Hacer copia ahora».</li>
+            <li>
+              Comprueba que las variables están marcadas para <b>Production</b>, vuelve a desplegar (Deployments → ⋯ → Redeploy) y pulsa «Hacer copia ahora». Vercel solo aplica las variables nuevas en un despliegue nuevo.
+            </li>
           </ol>
         </Card>
       )}
