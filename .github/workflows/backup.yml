@@ -78,7 +78,7 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
           sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" >/dev/null
           echo "/usr/lib/postgresql/$PG_MAJOR/bin" >>"$GITHUB_PATH"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: ${{ needs.backup.outputs.name }}
           path: backups
