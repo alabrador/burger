@@ -67,6 +67,18 @@ Si se cae la base de datos o la web entera, la propia web no puede avisar. Para 
 
 `/api/health` responde 200 si la base de datos y Redis funcionan, y 503 si alguno falla.
 
+## Conciliación de pagos
+
+Cada noche (con la tarea diaria `/api/cron`) y cuando pulsas **Admin → Pagos → Comprobar cobros ahora**, se cruza lo cobrado con los pedidos de los últimos 3 días:
+
+- **Se corrige sola:** un cobro de Stripe completado cuyo pedido no figuraba como pagado (el aviso de Stripe no llegó). El pedido se marca como pagado tras comprobar que el importe coincide.
+- **Te avisa por correo** y lo muestra en Errores para que lo revises:
+  - Cobros de Stripe sin pedido: reembólsalos en Stripe o crea el pedido a mano.
+  - Pedidos marcados como pagados sin ningún cobro registrado (no se aplica a efectivo).
+  - Cobros en pedidos que no figuran como pagados, por ejemplo con un importe distinto: revísalos y reembolsa.
+
+Los cobros de menos de 30 minutos no se tocan, porque pueden estar terminando de procesarse.
+
 ## Si algo se cae
 
 | Qué falla | Qué pasa | Qué hacer |

@@ -5,9 +5,11 @@ import { env } from "@/server/env";
 import { handle, json } from "@/server/http";
 import { processOutbox, requeueStuck } from "@/server/mail/outbox";
 import { expireUnpaid } from "@/server/orders";
+import { reportError } from "@/server/errors";
+import { reconcilePayments } from "@/server/reconcile";
 
 /**
- * Tareas periódicas: cancela pedidos sin pagar, reintenta correos y limpia sesiones.
+ * Tareas periódicas: cancela pedidos sin pagar, reintenta correos, limpia sesiones y concilia pagos.
  * Protegido con CRON_SECRET (Vercel Cron envía Authorization: Bearer <CRON_SECRET>).
  */
 export const GET = handle(async (req) => {
@@ -18,5 +20,11 @@ export const GET = handle(async (req) => {
   await requeueStuck();
   const mail = await processOutbox(100);
   await db().delete(schema.sessions).where(lt(schema.sessions.expiresAt, sql`now()`));
-  return json({ expired, mail });
+  const reconcile = await reconcilePayments().catch(async (e) => {
+    await reportError("cron", e, { path: "conciliación de pagos" });
+    return null;
+  });
+  // Errores resueltos de hace más de 90 días ya no aportan nada.
+  await db().delete(schema.appErrors).where(sql`resolved_at < now() - interval '90 days'`);
+  return json({ expired, mail, reconcile });
 });

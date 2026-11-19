@@ -1,18 +1,64 @@
 "use client";
 
+import { Scale } from "lucide-react";
 import { useState } from "react";
 import { api, dt, eur, METHOD } from "../../_lib/api";
-import { Card, cx, Empty, inputCls, PageHead, Pager, PayBadge, Table, useData } from "../../_lib/ui";
+import { Btn, Card, cx, Empty, inputCls, PageHead, Pager, PayBadge, Table, useData } from "../../_lib/ui";
 
 type R = { id: string; provider: string; providerRef: string | null; status: string; amountCents: number; refundedCents: number; createdAt: string; orderId: string; code: string; customerName: string };
 type Prov = { id: string; enabled: boolean; paid: number; refunded: number };
 
 export default function Pagos() {
   const [f, setF] = useState({ provider: "", page: 1 });
+  type Rec = { checkedStripe: number; fixed: string[]; issues: { kind: string; items: string[] }[] };
+  const [rec, setRec] = useState<Rec | { error: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const runRec = async () => {
+    setBusy(true);
+    try {
+      setRec(await api<Rec>("/api/admin/payments/reconcile", { method: "POST" }));
+    } catch (e) {
+      setRec({ error: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  };
   const { data } = useData(() => api<{ rows: R[]; total: number; page: number; size: number; providers: Prov[] }>(`/api/admin/payments?provider=${f.provider}&page=${f.page}`), [f.provider, f.page]);
   return (
     <>
-      <PageHead title="Pagos" sub="Cobros y reembolsos en euros. Configura las pasarelas en Configuración → Pagos." />
+      <PageHead
+        title="Pagos"
+        sub="Cobros y reembolsos en euros. Configura las pasarelas en Configuración → Pagos. Cada noche se comprueba que cada cobro tiene su pedido."
+        actions={
+          <Btn onClick={runRec} disabled={busy}>
+            <Scale className="size-4" /> {busy ? "Comprobando…" : "Comprobar cobros ahora"}
+          </Btn>
+        }
+      />
+      {rec && (
+        <div className={cx("mb-4 rounded-xl border px-4 py-3 text-sm", "error" in rec || rec.issues.length ? "border-red/30 bg-red/5" : "border-emerald-300 bg-emerald-50")}>
+          {"error" in rec ? (
+            rec.error
+          ) : !rec.issues.length && !rec.fixed.length ? (
+            <>Todo cuadra: cada cobro tiene su pedido{rec.checkedStripe ? ` (${rec.checkedStripe} cobros de Stripe revisados)` : ""}.</>
+          ) : (
+            <div className="space-y-2">
+              {rec.fixed.length > 0 && (
+                <div>
+                  <b>Corregidos ({rec.fixed.length}):</b> pedidos marcados como pagados porque el aviso de Stripe no había llegado.
+                  <ul className="mt-1 list-disc pl-5 font-mono text-xs">{rec.fixed.map((x) => <li key={x}>{x}</li>)}</ul>
+                </div>
+              )}
+              {rec.issues.map((i) => (
+                <div key={i.kind}>
+                  <b>{i.kind}:</b>
+                  <ul className="mt-1 list-disc pl-5 font-mono text-xs">{i.items.map((x) => <li key={x}>{x}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {data?.providers.map((p) => (
           <div key={p.id} className="rounded-xl border border-line bg-panel px-4 py-3">
