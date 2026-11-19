@@ -19,6 +19,7 @@
     "@react-three/fiber": "^9.8.2",
     "@stripe/react-stripe-js": "^3.11.0",
     "@stripe/stripe-js": "^7.10.0",
+    "@vercel/blob": "2.8.2",
     "drizzle-orm": "^0.45.4",
     "ioredis": "^6.0.0",
     "jsqr": "^1.4.0",
@@ -50,5 +51,10 @@
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@vercel/cli-config": {
+      "zod": "$zod"
+    }
   }
 }
