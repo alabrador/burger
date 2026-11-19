@@ -17,6 +17,8 @@ const ROWS = [
   ["__Host-cb_admin", "Crea tu Burger", "Cookie", "Sesión y seguridad del panel del restaurante. Solo para el personal del local.", "Hasta cerrar sesión o por inactividad"],
 ] as const;
 
+const HEAD = ["Nombre", "De quién", "Tipo", "Para qué", "Duración"];
+
 export default function Cookies() {
   return (
     <LegalPage title="Política de cookies" updated="19 de noviembre de 2026">
@@ -36,7 +38,7 @@ export default function Cookies() {
 
           <h2>2. Lista de cookies y almacenamiento</h2>
           <div className="overflow-x-auto">
-            <table className="legal-table">
+            <table className="legal-table legal-stack">
               <thead>
                 <tr>
                   <th>Nombre</th>
@@ -50,7 +52,9 @@ export default function Cookies() {
                 {ROWS.map((r) => (
                   <tr key={r[0]}>
                     {r.map((c, n) => (
-                      <td key={n}>{c}</td>
+                      <td key={n} data-label={HEAD[n]}>
+                        {c}
+                      </td>
                     ))}
                   </tr>
                 ))}

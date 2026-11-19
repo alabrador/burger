@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Inter, Kaushan_Script } from "next/font/google";
+import { Anton, Inter } from "next/font/google";
 import "./globals.css";
 
-const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: ["wdth"], style: ["normal", "italic"] });
+/** Tipografía de marca: Anton para titulares e impacto, Inter para texto e información. */
+const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: "400" });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const script = Kaushan_Script({ variable: "--font-kaushan", subsets: ["latin"], weight: "400" });
 
 const SITE = (process.env.APP_BASE_URL || "https://creatuburger.com").replace(/\/$/, "");
 const DESCRIPTION =
@@ -33,7 +33,7 @@ export const viewport: Viewport = { themeColor: "#120d0b", colorScheme: "dark" }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${archivo.variable} ${inter.variable} ${script.variable} antialiased`}>
+    <html lang="es" className={`${anton.variable} ${inter.variable} antialiased`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

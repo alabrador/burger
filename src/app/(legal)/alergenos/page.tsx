@@ -47,7 +47,35 @@ async function Table() {
   const groups = [...new Set(list.map((r) => r.group))];
   return (
     <>
-      <div className="mt-6 overflow-x-auto rounded-xl border border-line">
+      {/* Móvil: una ficha por producto con sus alérgenos */}
+      <div className="mt-6 space-y-5 sm:hidden">
+        {groups.map((g) => (
+          <section key={g}>
+            <h2 className="!mt-0">{g}</h2>
+            <ul className="!mt-2 !list-none !pl-0 divide-y divide-line rounded-xl border border-line bg-panel">
+              {list
+                .filter((r) => r.group === g)
+                .map((r) => (
+                  <li key={r.id} className="!mt-0 px-3 py-2.5">
+                    <p className="!mt-0 font-semibold text-ink">{r.name}</p>
+                    {r.allergens.length ? (
+                      <p className="!mt-1 flex flex-wrap gap-1.5">
+                        {ALLERGEN_LIST.filter((a) => r.allergens.includes(a)).map((a) => (
+                          <span key={a} className="rounded-full bg-red/15 px-2 py-0.5 text-xs font-semibold text-red-200 ring-1 ring-red/40">
+                            {capitalize(a)}
+                          </span>
+                        ))}
+                      </p>
+                    ) : (
+                      <p className="!mt-0.5 text-xs text-muted">Sin alérgenos declarados</p>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      <div className="mt-6 overflow-x-auto rounded-xl border border-line max-sm:hidden">
         <table className="legal-table min-w-[44rem]">
           <thead>
             <tr>
@@ -86,7 +114,7 @@ async function Table() {
           ))}
         </table>
       </div>
-      <p>
+      <p className="max-sm:hidden">
         <span className="mr-1.5 inline-block size-3 rounded-full bg-red align-middle" aria-hidden /> = contiene el alérgeno.
       </p>
       <h2>Trazas</h2>
