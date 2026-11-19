@@ -26,7 +26,7 @@
     "next": "16.4.6",
     "nodemailer": "^10.6.0",
     "otpauth": "^9.6.0",
-    "postgres": "^3.4.9",
+    "postgres": "^4.1.1",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
