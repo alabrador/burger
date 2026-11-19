@@ -1,0 +1,64 @@
+# Restaurar una copia en otra base de datos (ver docs/recuperacion.md).
+#
+# Secreto necesario: RESTORE_DATABASE_URL = conexión DIRECTA a la base de DESTINO.
+# Recomendado: una base NUEVA (rama de Neon o proyecto vacío), nunca la de producción en uso.
+name: Restaurar copia
+
+on:
+  workflow_dispatch:
+    inputs:
+      copia:
+        description: "Nombre del artefacto (p. ej. copia-20261119-123456789). Vacío = la más reciente"
+        required: false
+      confirmar:
+        description: "Escribe RESTAURAR para confirmar que se sobrescribirá la base de destino"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PG_MAJOR: "18"
+
+jobs:
+  restore:
+    if: inputs.confirmar == 'RESTAURAR'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cliente de Postgres ${{ env.PG_MAJOR }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-common >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq "postgresql-client-$PG_MAJOR" >/dev/null
+          echo "/usr/lib/postgresql/$PG_MAJOR/bin" >>"$GITHUB_PATH"
+      - name: Buscar la copia
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WANTED: ${{ inputs.copia }}
+        run: |
+          q='.artifacts | map(select(.expired == false and (.name | startswith("copia-"))))'
+          if [ -n "$WANTED" ]; then q="$q | map(select(.name == env.WANTED))"; fi
+          art="$(gh api "repos/${{ github.repository }}/actions/artifacts?per_page=100" --jq "$q | sort_by(.created_at) | last")"
+          [ -n "$art" ] && [ "$art" != "null" ] || { echo "No se encontró la copia" >&2; exit 1; }
+          echo "id=$(jq -r .id <<<"$art")" >>"$GITHUB_OUTPUT"
+          echo "run=$(jq -r .workflow_run.id <<<"$art")" >>"$GITHUB_OUTPUT"
+          echo "name=$(jq -r .name <<<"$art")" >>"$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.find.outputs.name }}
+          run-id: ${{ steps.find.outputs.run }}
+          github-token: ${{ github.token }}
+          path: backups
+      - name: Restaurar y comprobar
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          RESTORE_DATABASE_URL: ${{ secrets.RESTORE_DATABASE_URL }}
+        run: |
+          [ -n "$RESTORE_DATABASE_URL" ] || { echo "Falta el secreto RESTORE_DATABASE_URL" >&2; exit 1; }
+          echo "Restaurando ${{ steps.find.outputs.name }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          scripts/backup/restore.sh backups/*.dump.gpg --yes
+          scripts/backup/verify.sh | tee -a "$GITHUB_STEP_SUMMARY"
