@@ -23,6 +23,7 @@ export const GET = handle(async () => {
           soldOut: p.soldOut,
           model: p.model,
           swatch: p.swatch,
+          allergens: p.allergens,
           img: p.imageV ? `/api/catalog/img/${p.id}?v=${p.imageV}` : null,
         })),
     },

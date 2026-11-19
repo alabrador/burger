@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /** Icono propio de hamburguesa (pan, carne y queso) para el logo. */
 export function BurgerMark({ className = "" }: { className?: string }) {
   return (
@@ -37,8 +39,8 @@ export function BurgerMark({ className = "" }: { className?: string }) {
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <a
-      href="#"
+    <Link
+      href="/"
       className="flex items-center gap-2"
       aria-label="Crea tu Burger, inicio"
     >
@@ -69,7 +71,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
           />
         </svg>
       </span>
-    </a>
+    </Link>
   );
 }
 

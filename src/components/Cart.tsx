@@ -2,8 +2,11 @@
 
 import { Lock, Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect } from "react";
+import { allergensOf, capitalize } from "@/lib/allergens";
 import { money, thumb } from "@/lib/catalog";
+import { useLive } from "@/lib/live";
 import { cartCount, cartTotal, MAX_BURGERS, useBurger } from "@/lib/store";
 
 /** Carrito: revisar las hamburguesas añadidas y pasar a pagar. */
@@ -14,6 +17,7 @@ export default function Cart() {
   const setQty = useBurger((s) => s.setLineQty);
   const remove = useBurger((s) => s.removeLine);
   const pay = useBurger((s) => s.setCheckout);
+  const allergenMap = useLive((s) => s.allergens);
 
   useEffect(() => {
     if (!open) return;
@@ -61,6 +65,7 @@ export default function Cart() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-xs leading-snug text-muted">{l.desc}</p>
+                    <Allergens ids={["burger", l.protein, ...Object.keys(l.qty).filter((k) => l.qty[k] > 0)]} map={allergenMap} />
                     <div className="mt-2 flex items-center justify-between">
                       <div className="flex items-center gap-1.5" role="group" aria-label="Cantidad">
                         <button className={btn} aria-label="Una menos" disabled={l.quantity <= 1} onClick={() => setQty(l.key, l.quantity - 1)}>
@@ -94,10 +99,27 @@ export default function Cart() {
               <button onClick={() => setOpen(false)} className="w-full text-center text-sm font-semibold text-muted hover:text-ink">
                 Seguir creando
               </button>
+              <p className="text-center text-[11px] text-muted">
+                ¿Alergias? Consulta la{" "}
+                <Link href="/alergenos" target="_blank" className="underline underline-offset-2 hover:text-gold">
+                  tabla de alérgenos
+                </Link>
+                .
+              </p>
             </footer>
           </>
         )}
       </aside>
     </div>
+  );
+}
+
+/** Alérgenos de una hamburguesa: pan, proteína e ingredientes elegidos. */
+function Allergens({ ids, map }: { ids: string[]; map: Record<string, string[]> }) {
+  const list = allergensOf(ids, map);
+  return (
+    <p className="mt-1 text-[11px] leading-snug text-muted">
+      <span className="font-semibold text-gold/90">Alérgenos:</span> {list.length ? list.map(capitalize).join(", ") : "ninguno declarado"}
+    </p>
   );
 }

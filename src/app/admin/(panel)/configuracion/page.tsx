@@ -84,7 +84,7 @@ function Store({ s, onSaved }: { s: S; onSaved: () => void }) {
     </Field>
   );
   return (
-    <Card title="Datos del local">
+    <Card title="Datos del local" actions={<span className="text-xs text-muted">Salen en el aviso legal, la privacidad y las condiciones de venta</span>}>
       <form
         className="grid gap-3 sm:grid-cols-2"
         onSubmit={(e) => {

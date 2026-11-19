@@ -21,6 +21,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import CookieNotice from "./CookieNotice";
+import SiteMenu from "./SiteMenu";
 import {
   BUN,
   DRINKS,
@@ -148,6 +150,7 @@ export default function Configurator() {
       <Toast />
       <Cart />
       <Checkout />
+      <CookieNotice />
     </div>
   );
 }
@@ -157,14 +160,16 @@ function Header() {
   const lines = useBurger((s) => s.cart);
   const openCart = useBurger((s) => s.setCartOpen);
   const cart = { count: cartCount(lines), total: cartTotal(lines) };
+  const [menu, setMenu] = useState(false);
   return (
     <header className="relative z-40 shrink-0 bg-[linear-gradient(180deg,#1f1613_0%,#140e0c_100%)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:h-16 lg:px-4 2xl:px-6">
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-xl hover:bg-white/5 md:hidden"
+          className="grid size-10 place-items-center rounded-xl hover:bg-white/5"
           aria-label="Abrir menú"
-          onClick={() => soon("Menú")}
+          aria-expanded={menu}
+          onClick={() => setMenu(true)}
         >
           <Menu className="size-6" />
         </button>
@@ -201,6 +206,7 @@ function Header() {
         </div>
       </div>
       <div className="h-px bg-[linear-gradient(90deg,transparent,rgba(227,38,27,0.9)_15%,#ffc21a_50%,rgba(227,38,27,0.9)_85%,transparent)]" />
+      <SiteMenu open={menu} onClose={() => setMenu(false)} />
     </header>
   );
 }
