@@ -82,4 +82,12 @@ if (email && pass) {
     console.log(`Contraseña de ${email} actualizada desde ADMIN_PASSWORD`);
   } else console.log(`El usuario ${email} ya existe y su contraseña coincide con ADMIN_PASSWORD`);
 } else console.log("Sin ADMIN_EMAIL/ADMIN_PASSWORD: no se crea usuario");
+// Recuperación: si el dueño perdió el móvil de los dos pasos, ADMIN_RESET_2FA=1 los desactiva en el siguiente despliegue.
+if (email && process.env.ADMIN_RESET_2FA === "1") {
+  const r = await sql`update staff_users set totp_enabled = false, totp_secret = null where email = ${email} and role = 'owner' and totp_enabled returning id`;
+  if (r.length) {
+    await sql`delete from sessions where user_id = ${r[0].id}`;
+    console.log(`Verificación en dos pasos desactivada para ${email} (ADMIN_RESET_2FA). Quita esa variable y vuelve a activarla en el admin.`);
+  }
+}
 await sql.end();

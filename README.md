@@ -79,6 +79,7 @@ Configurador 3D de hamburguesas. El cliente elige la proteína, los quesos, los 
    En local: `npm run db:migrate` y `npm run db:seed`.
 4. Entra en `/admin`, activa la verificación en dos pasos en "Mi cuenta" y configura el local, el SMTP y las pasarelas en "Configuración".
 5. Registra las URL de webhook que muestra cada pasarela en Configuración → Pagos.
+6. Configura las copias de seguridad diarias de la base de datos (dos secretos en GitHub). Los pasos, cómo restaurar y qué hacer si algo se cae están en [docs/recuperacion.md](docs/recuperacion.md).
 
 `vercel.json` programa `/api/cron` una vez al día, el máximo del plan Hobby. Ese cron cancela los pedidos sin pagar, reintenta correos y limpia sesiones. Mientras haya alguien con la pantalla de cocina abierta, esas tareas también se hacen cada minuto.
 

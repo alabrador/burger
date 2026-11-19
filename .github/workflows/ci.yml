@@ -1,0 +1,70 @@
+# Comprobaciones de cada PR y de cada cambio en main: lint, tipos, build, auditoría y pruebas de la API.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: burger
+          POSTGRES_PASSWORD: burger
+          POSTGRES_DB: burger
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U burger" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://burger:burger@localhost:5432/burger
+      REDIS_URL: redis://localhost:6379
+      APP_SECRET: ci-secret-solo-para-pruebas-0123456789abcdef
+      APP_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      CRON_SECRET: ci-cron
+      APP_BASE_URL: http://localhost:3100
+      ADMIN_EMAIL: admin@creatuburger.test
+      ADMIN_PASSWORD: Prueba12345
+      MAIL_DEV_LOG: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Auditoría de dependencias (producción)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Lint
+        run: npm run lint
+      - name: Tipos
+        run: npx next typegen && npm run typecheck
+      - name: Migraciones y local abierto todo el día (las pruebas no dependen de la hora)
+        run: |
+          npm run db:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into settings(key, value) values ('store', jsonb_build_object('name','Crea tu Burger','city','Madrid','hours',(select jsonb_agg(jsonb_build_array(jsonb_build_object('open','00:00','close','23:59'))) from generate_series(1,7)))) on conflict (key) do update set value = excluded.value"
+      - name: Build (aplica migraciones y carga datos)
+        run: npm run build
+      - name: Pruebas de la API
+        run: |
+          npx next start -p 3100 > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3100/api/health >/dev/null && break; sleep 1; done
+          node scripts/api-test.mjs
+      - name: Registro del servidor
+        if: failure()
+        run: tail -n 200 server.log || true

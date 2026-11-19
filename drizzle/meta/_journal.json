@@ -29,6 +29,13 @@
       "when": 1795092564465,
       "tag": "0003_cuentas",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795100064573,
+      "tag": "0004_errores",
+      "breakpoints": true
     }
   ]
 }

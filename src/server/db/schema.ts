@@ -346,3 +346,26 @@ export const emailOutbox = pgTable(
   },
   (t) => [index("email_outbox_pending_idx").on(t.status, t.nextAttemptAt)],
 );
+
+/* ---------- errores ---------- */
+
+/** Errores de la app agrupados por huella: uno por causa, con contador y aviso por correo limitado. */
+export const appErrors = pgTable(
+  "app_errors",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    fingerprint: text("fingerprint").notNull(),
+    /** api | render | client | payment | webhook | mail | cron */
+    source: text("source").notNull(),
+    level: text("level").notNull().default("error"),
+    message: text("message").notNull(),
+    detail: text("detail"),
+    path: text("path"),
+    count: integer("count").notNull().default(1),
+    firstAt: ts("first_at").notNull().defaultNow(),
+    lastAt: ts("last_at").notNull().defaultNow(),
+    alertedAt: ts("alerted_at"),
+    resolvedAt: ts("resolved_at"),
+  },
+  (t) => [uniqueIndex("app_errors_fp_idx").on(t.fingerprint), index("app_errors_last_idx").on(t.lastAt)],
+);

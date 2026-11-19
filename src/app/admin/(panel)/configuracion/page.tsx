@@ -8,7 +8,7 @@ import { Btn, Card, cx, Field, inputCls, PageHead, Toggle, useData, useToast } f
 type Range = { open: string; close: string };
 type S = {
   store: { name: string; legalName: string; taxId: string; address: string; city: string; postalCode: string; phone: string; email: string; timezone: string; hours: Range[][]; notice: string };
-  orders: { enabled: boolean; pausedMessage: string; prepMinutes: number; slotMinutes: number; maxPerSlot: number; maxBurgersPerOrder: number; taxRateBp: number; pendingTimeoutMin: number; notifyEmail: string };
+  orders: { enabled: boolean; pausedMessage: string; prepMinutes: number; slotMinutes: number; maxPerSlot: number; maxBurgersPerOrder: number; taxRateBp: number; pendingTimeoutMin: number; notifyEmail: string; alertEmail: string };
   smtp: { host: string; port: number; secure: boolean; user: string; fromName: string; fromEmail: string; replyTo: string; hasPass: boolean; fromEnv: boolean };
   payments: {
     cash: { enabled: boolean };
@@ -192,6 +192,9 @@ function Orders({ s, onSaved }: { s: S; onSaved: () => void }) {
         </div>
         <Field label="Avisar de cada pedido nuevo a (correo, opcional)">
           <input className={inputCls} type="email" value={f.notifyEmail} onChange={(e) => setF({ ...f, notifyEmail: e.target.value })} />
+        </Field>
+        <Field label="Avisar de errores a (correo)" hint="Fallos en pagos, webhooks, correos o la web. Si lo dejas vacío, se usa el correo de arriba o el del local.">
+          <input className={inputCls} type="email" value={f.alertEmail ?? ""} onChange={(e) => setF({ ...f, alertEmail: e.target.value })} />
         </Field>
         <Btn variant="gold" disabled={busy}>
           Guardar

@@ -21,6 +21,7 @@ export const PERMS = {
   "orders.view": ALL,
   "orders.update": ALL,
   "orders.refund": ["owner", "admin", "manager"],
+  "orders.pause": ["owner", "admin", "manager"],
   "products.edit": ["owner", "admin", "manager"],
   "customers.view": ["owner", "admin", "manager", "cashier"],
   "customers.delete": ["owner", "admin"],

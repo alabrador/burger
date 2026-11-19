@@ -19,7 +19,7 @@ export type Kv = {
   ttl(key: string): Promise<number>;
 };
 
-const g = globalThis as unknown as { __cbKv?: Kv; __cbRedis?: Redis };
+const g = globalThis as unknown as { __cbKv?: Kv; __cbRedis?: Redis; __cbKvDegradedAt?: number };
 
 function memoryKv(): Kv {
   const m = new Map<string, { v: string; exp: number }>();
@@ -61,13 +61,22 @@ function memoryKv(): Kv {
 
 function redisKv(url: string): Kv {
   const r = new Redis(url, {
-    maxRetriesPerRequest: 2,
+    maxRetriesPerRequest: 1,
     enableAutoPipelining: true,
     connectTimeout: 5000,
+    // Si Redis no está conectado, las órdenes fallan al momento (y usamos la memoria) en vez de esperar en cola.
+    enableOfflineQueue: false,
+    commandTimeout: 1500,
     lazyConnect: false,
     keyPrefix: "cb:",
   });
-  r.on("error", (e) => console.error("[redis]", e.message));
+  let lastLog = 0;
+  r.on("error", (e) => {
+    if (Date.now() - lastLog > 60_000) {
+      lastLog = Date.now();
+      console.error("[redis]", e.message);
+    }
+  });
   g.__cbRedis = r;
   return {
     get: (k) => r.get(k),
@@ -90,24 +99,91 @@ function redisKv(url: string): Kv {
   };
 }
 
+/**
+ * Redis con respaldo en memoria: si Redis falla o tarda, cada operación se hace en la memoria
+ * de esta instancia. Así los límites de intentos siguen aplicándose (por instancia, no abiertos),
+ * los inicios de sesión y los pedidos siguen funcionando, y al volver Redis todo sigue igual.
+ */
+function resilientKv(primary: Kv, backup: Kv): Kv {
+  let lastWarn = 0;
+  const run =
+    <A extends unknown[], R>(op: (k: Kv, ...a: A) => Promise<R>) =>
+    async (...a: A): Promise<R> => {
+      try {
+        return await op(primary, ...a);
+      } catch (e) {
+        g.__cbKvDegradedAt = Date.now();
+        if (Date.now() - lastWarn > 60_000) {
+          lastWarn = Date.now();
+          console.warn("[redis] sin respuesta, usando memoria:", (e as Error).message);
+        }
+        return op(backup, ...a);
+      }
+    };
+  return {
+    get: run((k, key: string) => k.get(key)),
+    set: run((k, key: string, v: string, ttl?: number) => k.set(key, v, ttl)),
+    setNx: run((k, key: string, v: string, ttl: number) => k.setNx(key, v, ttl)),
+    del: run((k, ...keys: string[]) => k.del(...keys)),
+    incr: run((k, key: string, ttl?: number) => k.incr(key, ttl)),
+    ttl: run((k, key: string) => k.ttl(key)),
+  };
+}
+
 export function kv(): Kv {
   if (!g.__cbKv) {
     const url = env.redisUrl;
     if (!url && env.isProd && process.env.VERCEL) console.warn("[redis] REDIS_URL no definida: usando memoria (no apto para producción)");
-    g.__cbKv = url ? redisKv(url) : memoryKv();
+    g.__cbKv = url ? resilientKv(redisKv(url), memoryKv()) : memoryKv();
   }
   return g.__cbKv;
 }
+
+/** Comprueba Redis de verdad (sin el respaldo en memoria). null = no hay Redis configurado. */
+export async function redisPing(): Promise<boolean | null> {
+  kv();
+  const r = g.__cbRedis;
+  if (!r) return null;
+  try {
+    // Recién creada la conexión aún no está lista: esperamos un momento antes de dar Redis por caído.
+    if (r.status !== "ready")
+      await new Promise<void>((ok) => {
+        const t = setTimeout(ok, 2000);
+        r.once("ready", () => (clearTimeout(t), ok()));
+      });
+    return (await r.ping()) === "PONG";
+  } catch {
+    return false;
+  }
+}
+
+/** Últimos valores buenos por clave: si la base de datos cae, se sirven aunque estén caducados. */
+const lastGood = new Map<string, unknown>();
 
 /** Lee de caché o calcula y guarda como JSON. */
 export async function cached<T>(key: string, ttlSec: number, fn: () => Promise<T>): Promise<T> {
   try {
     const hit = await kv().get(key);
-    if (hit) return JSON.parse(hit) as T;
+    if (hit) {
+      const v = JSON.parse(hit) as T;
+      lastGood.set(key, v);
+      return v;
+    }
   } catch {
     /* si Redis falla seguimos contra la BD */
   }
-  const v = await fn();
+  let v: T;
+  try {
+    v = await fn();
+  } catch (e) {
+    // La base de datos no responde: mejor la última versión conocida que un error.
+    if (lastGood.has(key)) {
+      console.warn("[cache] usando copia anterior de", key, (e as Error).message);
+      return lastGood.get(key) as T;
+    }
+    throw e;
+  }
+  lastGood.set(key, v);
   kv()
     .set(key, JSON.stringify(v), ttlSec)
     .catch(() => {});

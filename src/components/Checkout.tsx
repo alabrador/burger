@@ -145,12 +145,18 @@ function Dialog({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     fetch("/api/store")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((s: Store) => {
         setStore(s);
         setMethod((m) => m || s.payments[0] || "");
       })
-      .catch(() => setErr("No se pudo cargar el local. Revisa tu conexión."));
+      .catch((st) =>
+        setErr(
+          typeof st === "number"
+            ? "Ahora mismo no podemos recibir pedidos por un problema técnico. Tu carrito sigue guardado: inténtalo en unos minutos."
+            : "No hay conexión. Revisa tu internet y vuelve a intentarlo; tu carrito sigue guardado.",
+        ),
+      );
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     addEventListener("keydown", k);
     dialog.current?.focus();

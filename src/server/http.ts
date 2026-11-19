@@ -2,6 +2,9 @@ import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { rateLimit } from "./ratelimit";
+import { isDbDown, reportError } from "./errors";
+
+export { isDbDown };
 
 export class ApiError extends Error {
   constructor(
@@ -81,8 +84,16 @@ export function handle<C = unknown>(fn: Handler<C>): Handler<C> {
         );
       // redirect()/notFound() de Next se relanzan
       if (e && typeof e === "object" && "digest" in e) throw e;
-      console.error("[api]", req.method, req.nextUrl.pathname, e);
+      if (isDbDown(e)) {
+        await reportError("api", e, { path: `BD sin conexión · ${req.method} ${req.nextUrl.pathname}` });
+        return json(
+          { error: "Estamos teniendo un problema técnico. Tu carrito sigue guardado: inténtalo de nuevo en unos minutos.", code: "unavailable" },
+          { status: 503, headers: { "Retry-After": "60" } },
+        );
+      }
+      await reportError("api", e, { path: `${req.method} ${req.nextUrl.pathname}` });
       return json({ error: "Error interno", code: "internal" }, 500);
     }
   };
 }
+

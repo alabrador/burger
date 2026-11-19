@@ -4,6 +4,7 @@ import { stripeFindPaid } from "@/server/payments/stripe";
 import { kv } from "@/server/redis";
 import { getSettings } from "@/server/settings";
 import { checkTrackToken, qrPayload } from "@/server/tokens";
+import { reportError } from "@/server/errors";
 
 /** Seguimiento público del pedido (requiere el token firmado del enlace). */
 export const GET = handle<RouteContext<"/api/orders/[code]">>(async (req, ctx) => {
@@ -22,7 +23,7 @@ export const GET = handle<RouteContext<"/api/orders/[code]">>(async (req, ctx) =
         r = (await getOrderByCode(code)) ?? r;
       }
     } catch (e) {
-      console.error("[stripe] comprobación de respaldo", e);
+      await reportError("payment", e, { path: "comprobación de cobro en Stripe", level: "warn" });
     }
   }
   const { order: o, items, events } = r;

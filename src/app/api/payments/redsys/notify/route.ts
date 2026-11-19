@@ -4,6 +4,7 @@ import { handle } from "@/server/http";
 import { markPaid, markPaymentFailed } from "@/server/orders";
 import { redsysVerify } from "@/server/payments/redsys";
 import { paymentConfig } from "@/server/settings";
+import { reportError } from "@/server/errors";
 
 /** Notificación servidor a servidor de Redsys (Bizum). Es la única fuente de verdad del pago. */
 export const POST = handle(async (req) => {
@@ -12,7 +13,10 @@ export const POST = handle(async (req) => {
   const sig = String(form.get("Ds_Signature") || "");
   const c = (await paymentConfig()).bizum;
   const v = params && sig && c.secretKey ? redsysVerify(c.secretKey, params, sig) : null;
-  if (!v) return new Response("firma no válida", { status: 400 });
+  if (!v) {
+    await reportError("webhook", "Notificación de Redsys (Bizum) con firma no válida (¿clave del TPV correcta?)", { path: "redsys" });
+    return new Response("firma no válida", { status: 400 });
+  }
   const [p] = await db()
     .select()
     .from(schema.payments)

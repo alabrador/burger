@@ -72,6 +72,8 @@ function Ribbon({ seed, x, z, w, h, opacity }: { seed: number; x: number; z: num
       }),
     [seed, opacity],
   );
+  // En three.js los uniforms se actualizan en cada fotograma: es la forma prevista de animar el shader.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame((_, dt) => (mat.uniforms.uTime.value += dt));
   return (
     <mesh position={[x, h / 2, z]} material={mat} renderOrder={10}>

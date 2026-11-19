@@ -58,5 +58,6 @@ export const GET = admin("dashboard", async (req) => {
       from orders where ready_at is not null and created_at >= ${from}`);
     return { range: r, kpi: k, live: [...live], series: [...series], methods: [...methods], proteins: [...proteins], ingredients: [...ingredients], prepMinutes: prep[0]?.minutes ?? 0 };
   });
-  return json(data);
+  const o = (await getSettings()).orders;
+  return json({ ...data, ordering: { enabled: o.enabled, pausedMessage: o.pausedMessage } });
 });
