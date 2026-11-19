@@ -221,8 +221,8 @@ function Stage() {
         <h1 className="whitespace-nowrap font-display text-lg font-extrabold leading-none lg:text-[1.625rem]">
           Tu Hamburguesa
         </h1>
-        <p className="-rotate-3 font-script text-2xl leading-tight text-gold lg:text-[2.25rem]">
-          Personalizada
+        <p className="font-script text-2xl leading-tight text-gold lg:text-[2.25rem]">
+          A tu gusto
         </p>
         <p className="mt-0.5 hidden text-[0.8125rem] text-ink/80 sm:block">
           Crea tu combinación perfecta con ingredientes premium.
