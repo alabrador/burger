@@ -158,7 +158,7 @@ Abre http://localhost:3000. Para comprobar antes de subir: `npx tsc --noEmit`, `
 ```
 src/
   app/
-    layout.tsx        Fuentes (Archivo, Inter, Kaushan Script) y metadatos
+    layout.tsx        Fuentes (Anton para titulares, Inter para texto) y metadatos
     page.tsx          Página principal
     globals.css       Colores, escalado por pantalla, scroll y botón animado
     admin/            Panel del restaurante (login, resumen, pedidos, cocina, escáner, etc.)
@@ -215,3 +215,4 @@ scripts/              Migrar, cargar datos, pruebas de API y de carga
 12. Cabecera sin el menú de secciones (Crear, Especiales, Promociones, Alérgenos) ni la barra inferior del móvil.
 13. Fase 3, bloque 1: páginas legales, aviso de cookies, alérgenos en la web y en el carrito, y SEO con imagen para compartir.
 14. Fase 3, bloque 2: cuenta de cliente con contraseña y código por correo que se verifica solo, historial de pedidos y "Repetir".
+15. Tipografía de marca: Anton en titulares (web, admin, páginas legales y correos) e Inter en el texto; páginas legales y de alérgenos adaptadas a móvil.

@@ -70,13 +70,13 @@ export function render(t: Template, o: MailOrder, store: Settings["store"]) {
       (i) => `<tr><td style="padding:8px 0;border-bottom:1px solid #eee;vertical-align:top"><b>${i.quantity}× ${esc(i.title)}</b><br><span style="color:#777;font-size:13px">${esc(i.description)}</span></td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;vertical-align:top">${eur(i.totalCents)}</td></tr>`,
     )
     .join("");
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(c.subject(o.code))}</title></head>
-<body style="margin:0;background:#f4efe9;font-family:Arial,Helvetica,sans-serif;color:#1b1208">
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"><meta name="viewport" content="width=device-width"><title>${esc(c.subject(o.code))}</title></head>
+<body style="margin:0;background:#f4efe9;font-family:Inter,Arial,Helvetica,sans-serif;color:#1b1208">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4efe9;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:14px;overflow:hidden">
-<tr><td style="background:#120d0b;padding:18px 24px;color:#ffc21a;font-size:20px;font-weight:bold">${esc(store.name)}</td></tr>
+<tr><td style="background:#120d0b;padding:18px 24px;color:#ffc21a;font-size:24px;font-family:Anton,Impact,Arial Narrow,sans-serif;letter-spacing:0.5px;text-transform:uppercase">${esc(store.name)}</td></tr>
 <tr><td style="padding:24px">
-<h1 style="margin:0 0 8px;font-size:22px">${c.title}</h1>
+<h1 style="margin:0 0 8px;font-size:28px;font-weight:400;font-family:Anton,Impact,Arial Narrow,sans-serif;letter-spacing:0.5px">${c.title}</h1>
 <p style="margin:0 0 16px;color:#444;line-height:1.5">Hola ${esc(o.customerName.split(" ")[0])}, ${c.body.charAt(0).toLowerCase() + c.body.slice(1)}</p>
 <table role="presentation" width="100%" style="background:#fff7e0;border-radius:10px;padding:14px;margin-bottom:16px"><tr>
 <td><div style="font-size:12px;color:#7a5b00;text-transform:uppercase;letter-spacing:1px">Código de recogida</div><div style="font-size:28px;font-weight:bold;letter-spacing:3px">${o.code}</div><div style="font-size:13px;color:#555;margin-top:4px">Recogida: ${esc(pickup)}</div></td>
