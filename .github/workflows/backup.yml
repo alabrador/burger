@@ -48,7 +48,7 @@ jobs:
           echo "name=copia-$(date -u +%Y%m%d)-${{ github.run_id }}" >>"$GITHUB_OUTPUT"
           # Las del domingo se guardan 90 días; el resto 30.
           if [ "$(date -u +%u)" = 7 ]; then echo "days=90" >>"$GITHUB_OUTPUT"; else echo "days=30" >>"$GITHUB_OUTPUT"; fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.meta.outputs.name }}
           path: ${{ steps.dump.outputs.file }}
