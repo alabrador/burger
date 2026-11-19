@@ -139,9 +139,31 @@ export const customers = pgTable(
     lastOrderAt: ts("last_order_at"),
     notes: text("notes"),
     anonymizedAt: ts("anonymized_at"),
+    /** cuenta de cliente (opcional): contraseña + código por correo en cada inicio de sesión */
+    passwordHash: text("password_hash"),
+    emailVerifiedAt: ts("email_verified_at"),
+    failedLogins: integer("failed_logins").notNull().default(0),
+    lockedUntil: ts("locked_until"),
+    lastLoginAt: ts("last_login_at"),
     createdAt: created(),
   },
   (t) => [uniqueIndex("customers_email_uq").on(t.email)],
+);
+
+export const customerSessions = pgTable(
+  "customer_sessions",
+  {
+    id: text("id").primaryKey(), // sha256 del token de la cookie
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    createdAt: created(),
+    lastSeenAt: ts("last_seen_at").notNull().defaultNow(),
+    expiresAt: ts("expires_at").notNull(),
+  },
+  (t) => [index("customer_sessions_customer_idx").on(t.customerId)],
 );
 
 export const orderStatus = pgEnum("order_status", [

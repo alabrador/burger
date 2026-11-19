@@ -28,6 +28,10 @@ export default function Privacidad() {
               descuento.
             </li>
             <li>
+              <strong>Datos de tu cuenta</strong>, si creas una: nombre, correo, teléfono y la contraseña, que guardamos cifrada con un algoritmo que no permite
+              recuperarla. Para entrar te pedimos además un código que enviamos a tu correo.
+            </li>
+            <li>
               <strong>Datos del pago:</strong> método, importe y estado. Los datos de la tarjeta los recoge directamente Stripe; nosotros nunca los vemos ni los
               guardamos.
             </li>
@@ -41,6 +45,10 @@ export default function Privacidad() {
             <li>
               <strong>Preparar y entregar tu pedido</strong>, cobrarlo, enviarte el QR de recogida y avisarte por correo de su estado. Base legal: la ejecución
               del contrato de compra (art. 6.1.b RGPD).
+            </li>
+            <li>
+              <strong>Gestionar tu cuenta</strong>, mostrarte tus pedidos anteriores y dejarte repetirlos. Base legal: la ejecución del contrato que aceptas al
+              registrarte (art. 6.1.b RGPD). Puedes pedir que borremos tu cuenta cuando quieras.
             </li>
             <li>
               <strong>Cumplir obligaciones legales</strong> contables y fiscales, y atender reclamaciones. Base legal: obligación legal (art. 6.1.c RGPD).

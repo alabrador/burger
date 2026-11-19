@@ -11,13 +11,14 @@ export const GET = admin<C>("customers.view", async (_req, _me, _log, ctx) => {
   const id = uuid.parse((await ctx.params).id);
   const [c] = await db().select().from(schema.customers).where(eq(schema.customers.id, id));
   if (!c) throw new ApiError(404, "Cliente no encontrado", "not_found");
+  const { passwordHash, ...customer } = c;
   const orders = await db()
     .select({ id: schema.orders.id, code: schema.orders.code, status: schema.orders.status, totalCents: schema.orders.totalCents, createdAt: schema.orders.createdAt, paymentMethod: schema.orders.paymentMethod })
     .from(schema.orders)
     .where(eq(schema.orders.customerId, id))
     .orderBy(desc(schema.orders.createdAt))
     .limit(100);
-  return json({ customer: c, orders });
+  return json({ customer: { ...customer, hasAccount: !!passwordHash }, orders });
 });
 
 export const PATCH = admin<C>("customers.view", async (req, _me, log, ctx) => {
@@ -35,10 +36,11 @@ export const DELETE = admin<C>("customers.delete", async (_req, _me, log, ctx) =
   await db().transaction(async (tx) => {
     const [c] = await tx
       .update(schema.customers)
-      .set({ email: anon, name: "Cliente anonimizado", phone: null, notes: null, marketingOptIn: false, anonymizedAt: sql`now()` })
+      .set({ email: anon, name: "Cliente anonimizado", phone: null, notes: null, marketingOptIn: false, anonymizedAt: sql`now()`, passwordHash: null, emailVerifiedAt: null })
       .where(eq(schema.customers.id, id))
       .returning();
     if (!c) throw new ApiError(404, "Cliente no encontrado", "not_found");
+    await tx.delete(schema.customerSessions).where(eq(schema.customerSessions.customerId, id));
     await tx.update(schema.orders).set({ customerName: "Anónimo", customerEmail: anon, customerPhone: null, ip: null, notes: null }).where(eq(schema.orders.customerId, id));
     await tx.delete(schema.emailOutbox).where(sql`${schema.emailOutbox.orderId} in (select id from orders where customer_id = ${id})`);
   });

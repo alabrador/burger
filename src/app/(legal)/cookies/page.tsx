@@ -12,6 +12,7 @@ const ROWS = [
   ["cb:carrito", "Crea tu Burger", "Almacenamiento local", "Guarda las hamburguesas de tu carrito.", "Hasta que vacíes el carrito o borres los datos del navegador"],
   ["cb:cliente", "Crea tu Burger", "Almacenamiento local", "Recuerda tu nombre, correo y teléfono para el próximo pedido, solo en tu dispositivo.", "Hasta que borres los datos del navegador"],
   ["cb:cookies", "Crea tu Burger", "Almacenamiento local", "Recuerda que ya has visto el aviso de cookies.", "Hasta que borres los datos del navegador"],
+  ["__Host-cb_cliente", "Crea tu Burger", "Cookie", "Mantiene abierta tu sesión si tienes cuenta de cliente.", "30 días o hasta que cierres sesión"],
   ["__stripe_mid, __stripe_sid", "Stripe", "Cookie", "Prevención del fraude en el pago con tarjeta. Solo se instalan si eliges pagar con tarjeta.", "1 año y 30 minutos"],
   ["__Host-cb_admin", "Crea tu Burger", "Cookie", "Sesión y seguridad del panel del restaurante. Solo para el personal del local.", "Hasta cerrar sesión o por inactividad"],
 ] as const;
@@ -29,7 +30,7 @@ export default function Cookies() {
           <h2>1. Solo usamos cookies técnicas</h2>
           <p>
             <strong>No usamos cookies de analítica, de publicidad ni de redes sociales</strong>, y no te rastreamos entre webs. Todo lo que guardamos es
-            necesario para que la web funcione (el carrito, el pago o el acceso al panel). Por eso la ley no exige pedirte el consentimiento, pero te
+            necesario para que la web funcione (el carrito, el pago, tu sesión de cliente o el acceso al panel). Por eso la ley no exige pedirte el consentimiento, pero te
             informamos de ello en el aviso que aparece la primera vez que entras.
           </p>
 

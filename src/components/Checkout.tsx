@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useAccount } from "@/lib/account";
 import { Banknote, CreditCard, Loader2, Lock, Smartphone, Wallet, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pickupSlots, type DayHours } from "@/lib/hours";
@@ -122,7 +123,11 @@ function Dialog({ onClose }: { onClose: () => void }) {
 
   const [store, setStore] = useState<Store | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [cust, setCust] = useState(() => (typeof window === "undefined" ? { name: "", email: "", phone: "" } : remember.get()));
+  const [cust, setCust] = useState(() => {
+    if (typeof window === "undefined") return { name: "", email: "", phone: "" };
+    const me = useAccount.getState().me;
+    return me ? { name: me.name, email: me.email, phone: me.phone ?? "" } : remember.get();
+  });
   const [pickup, setPickup] = useState("asap");
   const [method, setMethod] = useState<keyof typeof METHODS | "">("");
   const [coupon, setCoupon] = useState("");
