@@ -2,6 +2,7 @@ import { ApiError, body, clientIp, handle, json, limit } from "@/server/http";
 import { createOrder, createOrderSchema, setStatus } from "@/server/orders";
 import { startPayment } from "@/server/payments";
 import { trackToken } from "@/server/tokens";
+import { reportError } from "@/server/errors";
 
 export const POST = handle(async (req) => {
   const ip = clientIp(req);
@@ -16,7 +17,7 @@ export const POST = handle(async (req) => {
   try {
     payment = await startPayment(order);
   } catch (e) {
-    console.error("[pago]", e);
+    await reportError("payment", e, { path: `iniciar pago ${order.paymentMethod}` });
     if (!replay) await setStatus(order.id, "cancelled", null, { reason: "No se pudo iniciar el pago", notify: false }).catch(() => {});
     throw new ApiError(502, "No pudimos conectar con la pasarela de pago. Prueba otro método.", "payment_unavailable");
   }

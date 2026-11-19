@@ -5,6 +5,7 @@ import { ApiError } from "../http";
 import { createOrder, markPaid, quote, resolvePickup, type CreateOrderInput, type Order } from "../orders";
 import { getSettings, paymentConfig } from "../settings";
 import { stripe, stripeRefund } from "./stripe";
+import { reportError } from "../errors";
 
 /**
  * Pago con tarjeta SIN crear el pedido antes de cobrar:
@@ -69,7 +70,7 @@ export async function finalizeCard(draftId: string): Promise<Order> {
       try {
         await stripeRefund(pi.id, pi.amount_received, d.id);
       } catch (r) {
-        console.error("[tarjeta] no se pudo reembolsar", pi.id, r);
+        await reportError("payment", r, { path: "reembolso automático", detail: `Cobro ${pi.id} de ${pi.amount_received} céntimos sin pedido y SIN reembolsar. Reembolsar a mano en Stripe.` });
       }
       const msg = e instanceof ApiError ? e.message : "No pudimos registrar el pedido";
       throw new ApiError(409, `${msg} Te hemos devuelto el importe a la tarjeta.`, "refunded");

@@ -12,6 +12,7 @@ import { sendNow } from "./mail/outbox";
 import { rateLimit } from "./ratelimit";
 import { kv } from "./redis";
 import { getSettings } from "./settings";
+import { reportError } from "./errors";
 
 /*
  * Cuentas de cliente con dos factores: contraseña + código de 6 cifras enviado al
@@ -54,7 +55,7 @@ export async function sendCode(p: Purpose, email: string, name: string, data: Pe
   try {
     await sendNow({ to: email, ...renderCode(code, p, name, store) });
   } catch (e) {
-    console.error("[cuenta] correo del código", e);
+    await reportError("mail", e, { path: "código de acceso de cliente" });
     await kv().del(codeKey(p, email), `otpcd:${p}:${sha256(email)}`);
     throw new ApiError(503, "No hemos podido enviar el correo. Inténtalo en unos minutos.", "mail_failed");
   }

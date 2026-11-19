@@ -4,6 +4,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 import { db, schema } from "../db";
 import { getSettings, smtpConfig } from "../settings";
 import { render, type MailOrder, type Template } from "./templates";
+import { reportError } from "../errors";
 
 type Tx = Parameters<Parameters<ReturnType<typeof import("../db").db>["transaction"]>[0]>[0];
 
@@ -112,6 +113,9 @@ export async function processOutbox(limit = 20, onlyOrderId?: string) {
           nextAttemptAt: new Date(Date.now() + (BACKOFF_MIN[m.attempts - 1] ?? 360) * 60_000),
         })
         .where(eq(schema.emailOutbox.id, m.id));
+      // Aviso solo cuando se agotan los reintentos (o al primer fallo, para enterarse pronto de un SMTP roto).
+      if (done || m.attempts === 1)
+        await reportError("mail", e, { path: done ? "correo descartado tras reintentos" : "envío de correo", level: done ? "error" : "warn", detail: `Plantilla ${m.template}` });
     }
   }
   return { sent, failed };

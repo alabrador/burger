@@ -12,6 +12,7 @@ import type { MailOrder, Template } from "./mail/templates";
 import { taxIncluded } from "./money";
 import { kv } from "./redis";
 import { getSettings, isOpenAt, paymentConfig } from "./settings";
+import { reportError } from "./errors";
 
 export type Order = typeof schema.orders.$inferSelect;
 export type OrderStatus = Order["status"];
@@ -126,7 +127,7 @@ async function orderItems(tx: Tx | ReturnType<typeof db>, orderId: string) {
 /** Envía en segundo plano, tras responder, los correos encolados para ese pedido. */
 export function flushMail(orderId?: string) {
   try {
-    after(() => processOutbox(10, orderId).catch((e) => console.error("[mail]", e)));
+    after(() => processOutbox(10, orderId).catch((e) => reportError("mail", e, { path: "envío tras el pedido" })));
   } catch {
     processOutbox(10, orderId).catch(() => {});
   }
@@ -278,7 +279,7 @@ export async function markPaid(orderId: string, provider: Order["paymentMethod"]
     if (amountCents !== o.totalCents) {
       // Se cobró un importe distinto: queda registrado para revisar/reembolsar desde el admin, sin confirmar el pedido.
       await tx.insert(schema.orderEvents).values({ orderId, type: "payment:mismatch", message: `Importe cobrado ${amountCents} ≠ total ${o.totalCents}. Revisar y reembolsar.` });
-      console.error(`[pago] importe no coincide en pedido ${o.code}`);
+      await reportError("payment", `Importe cobrado (${amountCents}) distinto del total (${o.totalCents}) en el pedido ${o.code}. Revisar y reembolsar.`, { path: provider });
       return null;
     }
     const wasCancelled = o.status === "cancelled";
@@ -404,8 +405,8 @@ export const activeFilter = inArray(schema.orders.status, ACTIVE);
 export async function maintenance() {
   if (!(await kv().setNx("maint:lock", "1", 60).catch(() => false))) return;
   const run = async () => {
-    await expireUnpaid().catch((e) => console.error("[maint]", e));
-    await processOutbox(50).catch((e) => console.error("[maint]", e));
+    await expireUnpaid().catch((e) => reportError("cron", e, { path: "caducar pedidos" }));
+    await processOutbox(50).catch((e) => reportError("cron", e, { path: "cola de correos" }));
   };
   try {
     after(run);

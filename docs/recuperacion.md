@@ -50,6 +50,23 @@ RESTORE_DATABASE_URL=postgres://... scripts/backup/verify.sh
 
 Los pedidos hechos entre la última copia y el fallo no estarán en ella. Se pueden reconstruir a partir de los pagos en Stripe y PayPal y de los correos de confirmación.
 
+## Errores y avisos
+
+- **Admin → Errores** muestra los fallos de la web, los pagos, los webhooks y los correos. Cada causa aparece una sola vez, con el número de veces que ha ocurrido. Al marcar un error como resuelto desaparece de la lista; si vuelve a ocurrir, se reabre solo. El menú muestra en rojo cuántos errores quedan pendientes.
+- **Aviso por correo** al instante cuando falla algo importante: un cobro que no se puede confirmar o reembolsar, un importe que no coincide, un webhook con firma no válida, un correo descartado tras los reintentos o un error 500. Se envía como mucho un correo por causa cada hora y 20 al día. El correo se elige en Admin → Configuración → "Avisar de errores a" (si está vacío, se usa el de avisos de pedidos o el del local). Para que lleguen hace falta el SMTP configurado.
+- **Los errores del navegador** (pantalla "Algo se ha quemado en la plancha") se registran, pero no generan correo.
+- Los mensajes se guardan sin contraseñas, claves ni correos completos.
+
+### Aviso si la web se cae
+
+Si se cae la base de datos o la web entera, la propia web no puede avisar. Para eso hay que usar un monitor externo gratuito:
+
+1. Crea una cuenta en [UptimeRobot](https://uptimerobot.com) o [Better Stack](https://betterstack.com/uptime).
+2. Añade un monitor HTTP(s) a `https://creatuburger.com/api/health` cada 5 minutos.
+3. Ponle tu correo o el móvil (app) para los avisos.
+
+`/api/health` responde 200 si la base de datos y Redis funcionan, y 503 si alguno falla.
+
 ## Si algo se cae
 
 | Qué falla | Qué pasa | Qué hacer |

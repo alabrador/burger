@@ -6,6 +6,7 @@ import { handle, limit } from "@/server/http";
 import { markPaid } from "@/server/orders";
 import { paypalCapture } from "@/server/payments/paypal";
 import { checkTrackToken, trackToken } from "@/server/tokens";
+import { reportError } from "@/server/errors";
 
 /** El cliente vuelve de PayPal: capturamos el pago y lo mandamos al seguimiento. */
 export const GET = handle(async (req) => {
@@ -31,7 +32,7 @@ export const GET = handle(async (req) => {
     await markPaid(o.id, "paypal", c.captureId, c.amountCents, { paypalOrder: ppOrder });
     return go("ok");
   } catch (e) {
-    console.error("[paypal]", e);
+    await reportError("payment", e, { path: "captura PayPal" });
     return go("ko");
   }
 });

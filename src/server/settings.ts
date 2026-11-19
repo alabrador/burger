@@ -35,6 +35,8 @@ export const ordersSchema = z.object({
   taxRateBp: z.number().int().min(0).max(3000).default(1000),
   pendingTimeoutMin: z.number().int().min(5).max(120).default(30),
   notifyEmail: z.string().trim().email().or(z.literal("")).default(""),
+  /** Avisos de errores (pagos, correos, fallos de la web). Vacío = notifyEmail o el correo del local. */
+  alertEmail: z.string().trim().email().or(z.literal("")).default(""),
 });
 
 export const smtpSchema = z.object({

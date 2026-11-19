@@ -14,6 +14,7 @@ import {
   Settings,
   Tags,
   TicketPercent,
+  TriangleAlert,
   UserCog,
   Users,
   X,
@@ -25,7 +26,7 @@ import { BurgerMark } from "@/components/Brand";
 import { api, ROLE, setCsrf } from "./api";
 import { cx, ToastProvider } from "./ui";
 
-export type Me = { id: string; email: string; name: string; role: string; csrf: string; totpEnabled: boolean; perms: string[] };
+export type Me = { id: string; email: string; name: string; role: string; csrf: string; totpEnabled: boolean; perms: string[]; openErrors?: number };
 const MeCtx = createContext<Me | null>(null);
 export const useMe = () => useContext(MeCtx)!;
 
@@ -58,6 +59,7 @@ const NAV = [
       { href: "/admin/configuracion", label: "Configuración", icon: Settings, perm: "settings.edit" },
       { href: "/admin/usuarios", label: "Usuarios", icon: UserCog, perm: "users.manage" },
       { href: "/admin/auditoria", label: "Auditoría", icon: ScrollText, perm: "audit.view" },
+      { href: "/admin/errores", label: "Errores", icon: TriangleAlert, perm: "audit.view" },
     ],
   },
 ];
@@ -120,6 +122,9 @@ export function Shell({ children }: { children: ReactNode }) {
                 >
                   <n.icon className="size-[18px]" strokeWidth={active ? 2.25 : 1.75} />
                   {n.label}
+                  {n.href === "/admin/errores" && !!me.openErrors && (
+                    <span className="ml-auto rounded-full bg-red px-1.5 py-px text-[11px] font-bold text-white tabular-nums">{me.openErrors > 99 ? "99+" : me.openErrors}</span>
+                  )}
                 </Link>
               );
             })}
