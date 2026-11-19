@@ -72,10 +72,11 @@ Si se cae la base de datos o la web entera, la propia web no puede avisar. Para 
 | Qué falla | Qué pasa | Qué hacer |
 | --- | --- | --- |
 | **Un despliegue rompe la web** | La versión nueva da errores. | En Vercel → Deployments, abre el último despliegue bueno y pulsa **Instant Rollback**. Vuelve en segundos. |
-| **La base de datos** | No se pueden hacer pedidos ni entrar al admin. `/api/health` responde `db: false`. | Mira el estado del proveedor. Si la base se ha perdido o dañado, restaura como se explica arriba. |
-| **Redis** | Sin caché la web va más lenta. Hoy, además, pueden fallar los pedidos y los inicios de sesión mientras dure la caída. `/api/health` responde `redis: false`. | Revisa Upstash. No hace falta restaurar nada: al volver Redis todo se normaliza solo. |
+| **La base de datos** | La web y el configurador 3D siguen funcionando con la última carta y precios conocidos, y el carrito se conserva. Al pedir, el cliente ve "Estamos teniendo un problema técnico. Tu carrito sigue guardado". Te llega un correo de aviso y `/api/health` responde 503. | Mira el estado del proveedor. Si la base se ha perdido o dañado, restaura como se explica arriba. |
+| **Redis** | La web sigue funcionando: cada servidor usa su memoria para la caché, las sesiones, los códigos de acceso y los límites de intentos (que siguen aplicándose). `/api/health` responde `redis: false` (con código 200). | Revisa Upstash. No hace falta restaurar nada: al volver Redis todo se normaliza solo. |
 | **El correo (SMTP)** | Los correos se quedan en cola y se reintentan solos. | Revisa el SMTP en Admin → Configuración → "Probar". Al arreglarlo, la cola se envía. |
-| **Una pasarela de pago** | Ese método de pago falla. | Desactívala en Admin → Configuración → Pasarelas hasta que vuelva. |
+| **Una pasarela de pago** | Ese método falla y el cliente puede elegir otro. Te llega un aviso. | Desactívala en Admin → Configuración → Pagos hasta que vuelva. |
+| **Cualquier problema en el local** (cocina saturada, avería…) | — | Botón **Pausar pedidos** en el Dashboard: la web deja de aceptar pedidos al momento con el mensaje de "pedidos en pausa" de Configuración. El mismo botón los reanuda. Pueden usarlo dueño, administrador y encargado. |
 | **Se filtra una clave** | — | Ver "Cambiar claves" abajo. |
 | **Olvidas la contraseña del admin** | — | Pon en Vercel `ADMIN_EMAIL` y una `ADMIN_PASSWORD` nueva y vuelve a desplegar: la contraseña de ese dueño se restablece y se desbloquea. Después borra `ADMIN_PASSWORD`. |
 | **Pierdes el móvil de los dos pasos** | — | Otro dueño o administrador puede quitártelos en Admin → Usuarios. Si eres el único, añade en Vercel `ADMIN_RESET_2FA=1` (junto a `ADMIN_EMAIL`), vuelve a desplegar, entra, borra la variable y vuelve a activar los dos pasos en "Mi cuenta". |

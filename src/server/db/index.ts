@@ -17,7 +17,7 @@ export function db(): DB {
     const sql = postgres(env.databaseUrl, {
       max: Number(process.env.DB_POOL_MAX || 5),
       idle_timeout: 20,
-      connect_timeout: 10,
+      connect_timeout: 5,
       prepare: false,
       ssl: /localhost|127\.0\.0\.1/.test(env.databaseUrl) ? false : "require",
     });

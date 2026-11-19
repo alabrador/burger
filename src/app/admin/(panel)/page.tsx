@@ -1,10 +1,11 @@
 "use client";
 
-import { Activity, Beef, ChartColumn, CircleX, CreditCard, ReceiptText, ShoppingBag, Sparkles, TrendingUp, Users } from "lucide-react";
+import { Activity, Beef, CirclePause, CirclePlay, ChartColumn, CircleX, CreditCard, ReceiptText, ShoppingBag, Sparkles, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ago, api, eur, METHOD } from "../_lib/api";
-import { Card, cx, StatusBadge, useData } from "../_lib/ui";
+import { Card, cx, StatusBadge, useData, useToast } from "../_lib/ui";
+import { useMe } from "../_lib/shell";
 
 type Dash = {
   kpi: { orders: number; revenue: number; refunds: number; avg: number; cancelled: number; customers: number };
@@ -14,6 +15,7 @@ type Dash = {
   proteins: { id: string; n: number }[];
   ingredients: { id: string; n: number }[];
   prepMinutes: number;
+  ordering?: { enabled: boolean; pausedMessage: string };
 };
 type P = { id: string; name: string };
 const RANGES = [
@@ -26,7 +28,10 @@ type Recent = { rows: { id: string; code: string; status: string; customerName: 
 
 export default function Dashboard() {
   const [range, setRange] = useState<string>("today");
-  const { data: d, error } = useData(() => api<Dash>(`/api/admin/dashboard?range=${range}`), [range]);
+  const me = useMe();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const { data: d, error, reload } = useData(() => api<Dash>(`/api/admin/dashboard?range=${range}`), [range]);
   const { data: products } = useData(() => api<P[]>("/api/admin/products"));
   const { data: recent } = useData(() => api<Recent>("/api/admin/orders?size=10"));
   const name = (id: string) => products?.find((p) => p.id === id)?.name ?? id;
@@ -51,6 +56,33 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
+            {d?.ordering && me.perms.includes("orders.pause") && (
+              <button
+                disabled={busy}
+                onClick={async () => {
+                  const enabled = !d.ordering!.enabled;
+                  if (!enabled && !confirm("¿Pausar los pedidos? La web dejará de aceptar pedidos nuevos hasta que los reanudes.")) return;
+                  setBusy(true);
+                  try {
+                    await api("/api/admin/orders/pause", { method: "POST", body: { enabled } });
+                    toast(enabled ? "Pedidos reanudados" : "Pedidos en pausa");
+                    reload();
+                  } catch (e) {
+                    toast((e as Error).message, "err");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                className={cx(
+                  "inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition disabled:opacity-60",
+                  d.ordering.enabled ? "border border-white/15 bg-white/[0.06] hover:bg-white/10" : "bg-red text-white hover:bg-red-2",
+                )}
+                title={d.ordering.enabled ? "Dejar de aceptar pedidos nuevos" : d.ordering.pausedMessage}
+              >
+                {d.ordering.enabled ? <CirclePause className="size-4 text-gold" /> : <CirclePlay className="size-4" />}
+                {d.ordering.enabled ? "Pausar pedidos" : "Pedidos en pausa · Reanudar"}
+              </button>
+            )}
             <Link href="/admin/cocina" className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold hover:bg-white/10">
               <Activity className="size-4 text-gold" /> {inKitchen} en cocina
             </Link>
